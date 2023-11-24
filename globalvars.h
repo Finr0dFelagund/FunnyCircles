@@ -7,8 +7,8 @@ namespace GLOBALVARS
 {
     extern int gravityAcceleration;
     extern int updateTime;
-    //extern int simulationSpeed;
-    //extern int redrawTime;
+    extern int simulationSpeed;
+    extern int redrawTime;
     extern int maxSpeed;
     extern int boundStiffnessFactor;
     extern int maxBoundEnergy;
@@ -16,9 +16,9 @@ namespace GLOBALVARS
     extern bool enableGravity;
     extern bool enableCollisions;
     extern int enableFriction;
-    //extern int slowModeRait;
+    extern int slowModeRait;
 
-    //extern qreal force(qreal x, qreal m1, qreal m2);
+    extern qreal force(qreal x, qreal m1, qreal m2);
 }
 
 #endif // GLOBALVARS_H

@@ -83,13 +83,18 @@ void Cells::calcForces()
     QVector2D routeJtoI;
     qreal distance;
     Cell *dealer, *consumer;
+    for(quint16 i = 0; i < cells.size(); i++)
+    {
+        cells[i]->sumForce.setX(0);
+        cells[i]->sumForce.setY(0);
+    }
     if(GLOBALVARS::enableGravity)//gravity forces
     {
         QVector2D fieldForce;
         for(quint16 i = 0; i < cells.size(); i++)
         {
             consumer = cells[i];
-            for(quint16 j = 0; j < cells.size(); j++)//field forces
+            for(quint16 j = 0; j < cells.size(); j++)
             {
                 dealer = cells[j];
                 if(consumer != dealer)
@@ -150,10 +155,10 @@ void Cells::calcForces()
                     distance = consumer->position.distanceToPoint(dealer->position);
                     elongation = (consumer->type->hardnessFactor == 0 || dealer->type->hardnessFactor == 0 || distance > (consumer->type->size + dealer->type->size)/2 ) ? 0 :
                                      ((consumer->type->size + dealer->type->size)/2 - distance) / (dealer->type->hardnessFactor/consumer->type->hardnessFactor + 1);
-                    elasticForce = elongation * elongation * dealer->type->hardnessFactor * routeJtoI;
+                    elasticForce = pow(elongation, 4) * dealer->type->hardnessFactor * routeJtoI;
                     consumer->sumForce += elasticForce;
                     elongation *= (dealer->type->hardnessFactor/consumer->type->hardnessFactor);
-                    elasticForce = elongation * elongation * consumer->type->hardnessFactor * (-1) * routeJtoI;
+                    elasticForce = pow(elongation, 4) * consumer->type->hardnessFactor * (-1) * routeJtoI;
                     dealer->sumForce += elasticForce;
                 }
             }

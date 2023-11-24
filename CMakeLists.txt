@@ -27,6 +27,10 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
         globalvars.cpp
         globalvars.h
+        myqgraphicsview.h myqgraphicsview.cpp
+        settingswidget.h settingswidget.cpp
+        addcellwidget.h addcellwidget.cpp
+        typecreationwidget.h typecreationwidget.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET CellAutomatV2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
