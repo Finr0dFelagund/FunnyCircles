@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
     myWindow = this;
     graphicsView = new MyQGraphicsView;
     connect(graphicsView, SIGNAL(signalInteract(quint8,quint8)), this, SLOT(sceneInteracted(quint8,quint8)));
-    connect(graphicsView, SIGNAL(mouseInteractSignal(Cell*,quint8,quint8)), this, SLOT(cellInteracted(Cell*,quint8,quint8)));
+    connect(graphicsView, SIGNAL(mouseInteractSignal(quint16,quint8,quint8)), this, SLOT(cellInteracted(quint16,quint8,quint8)));
     graphicsView->startRendering();
 
     mainLayout = new QGridLayout;
@@ -317,7 +317,7 @@ void MainWindow::createTypeButSlot()
     setMaximumSize(width(), height());
 }
 
-/*void MainWindow::cellInteracted(Cell* cell, quint8 mouseButton, quint8 event)
+void MainWindow::cellInteracted(quint16 cell, quint8 mouseButton, quint8 event)
 {
     if(mouseButton == 0)
     {
@@ -325,39 +325,39 @@ void MainWindow::createTypeButSlot()
         {
             if(deleteMode && QApplication::keyboardModifiers() != Qt::ShiftModifier)
             {
-                delete cell;
+                graphicsView->deleteCell(cell);
             }
             else if(stopMode)
             {
-                cell->setSpeed(QVector2D(0, 0));
+                graphicsView->cells.cells[cell]->speed = QVector2D(0, 0);
             }
             else if(toggleMoveableMode)
             {
-                if(cell->getMoveAble())
+                if(graphicsView->cells.cells[cell]->moveAble)
                 {
-                    cell->setMoveAble(0);
+                    graphicsView->cells.cells[cell]->moveAble = 0;
                 }
                 else
                 {
-                    cell->setMoveAble(1);
+                    graphicsView->cells.cells[cell]->moveAble = 1;
                 }
             }
             else if(toggleCollisionsMode)
             {
-                if(cell->getCollisionAble())
+                if(graphicsView->cells.cells[cell]->collisionAble)
                 {
-                    cell->setCollisionAble(0);
+                    graphicsView->cells.cells[cell]->collisionAble = 0;
                 }
                 else
                 {
-                    cell->setCollisionAble(1);
+                    graphicsView->cells.cells[cell]->collisionAble = 1;
                 }
             }
-            else if(removeAllBoundsMode)
+            /*else if(removeAllBoundsMode)
             {
-                cell->removeAllConnections();
-            }
-            else if(boundMode)
+                graphicsView->cells.cells[cell].;
+            }*/
+            /*else if(boundMode)
             {
                 if(bufferCell == 0)
                 {
@@ -368,8 +368,8 @@ void MainWindow::createTypeButSlot()
                     Cell::tryConnect(bufferCell, cell);
                     bufferCell = 0;
                 }
-            }
-            else if(unBoundMode)
+            }*/
+            /*else if(unBoundMode)
             {
                 if(bufferCell == 0)
                 {
@@ -380,15 +380,15 @@ void MainWindow::createTypeButSlot()
                     Cell::removeConnect(bufferCell, cell);
                     bufferCell = 0;
                 }
-            }
+            }*/
             else if(grabMode)
             {
                 bufferCell = cell;
-                grabber->start(5);
                 bufferPosition = QCursor::pos();
-                bufferPosition2 = cell->getPosition();
-                bufferMoveAble = cell->getMoveAble();
-                cell->setMoveAble(0);
+                bufferPosition2 = graphicsView->cells.cells[cell]->position;
+                bufferMoveAble = graphicsView->cells.cells[cell]->moveAble;
+                graphicsView->cells.cells[cell]->moveAble = 0;
+                grabber->start(5);
             }
         }
         else if(event == 1)
@@ -396,11 +396,12 @@ void MainWindow::createTypeButSlot()
             if(grabMode)
             {
                 grabber->stop();
-                cell->setMoveAble(bufferMoveAble);
+                graphicsView->cells.cells[cell]->moveAble = bufferMoveAble;
+                graphicsView->cells.cells[cell]->speed = QVector2D(0, 0);
             }
         }
     }
-}*/
+}
 
 void MainWindow::slotGrabberAlarm()
 {
@@ -496,9 +497,6 @@ void MainWindow::sceneInteracted(quint8 button, quint8 event)
                 graphicsView->addCell(CellType::types[bufferTypeId], QVector2D(bufferPosition.x(), bufferPosition.y()), QVector2D(0, 0));
                 graphicsView->cells.cells.last()->moveAble = false;
                 graphicsView->cells.cells.last()->collisionAble = false;
-                //bufferCell = graphicsView->cells.cells.size() - 1;
-                //bufferCell->setMoveAble(0);
-                //bufferCell->setCollisionAble(0);
                 speedLine = new QGraphicsLineItem(bufferPosition.x(), bufferPosition.y(), bufferPosition.x()+1, bufferPosition.y()+1);
                 graphicsView->scene.addItem(speedLine);
                 speeder->start(10);
@@ -506,7 +504,7 @@ void MainWindow::sceneInteracted(quint8 button, quint8 event)
         }
         else if(event == 1)
         {
-            /*if(selectionZone != 0)
+            if(selectionZone != 0)
             {
                 foreach(QGraphicsItem* item, selectionZone->collidingItems(Qt::IntersectsItemShape))
                 {
@@ -514,44 +512,44 @@ void MainWindow::sceneInteracted(quint8 button, quint8 event)
                     {
                         if(deleteMode)
                         {
-                            delete static_cast<Cell*>(item);
+                            graphicsView->deleteCell(graphicsView->circles.indexOf(item));
                         }
                         else if(stopMode)
                         {
-                            static_cast<Cell*>(item)->setSpeed(QVector2D(0, 0));
+                            graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->speed = QVector2D(0, 0);
                         }
                         else if(toggleMoveableMode)
                         {
-                            if(static_cast<Cell*>(item)->getMoveAble())
+                            if(graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->moveAble)
                             {
-                                static_cast<Cell*>(item)->setMoveAble(0);
+                                graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->moveAble = 0;
                             }
                             else
                             {
-                                static_cast<Cell*>(item)->setMoveAble(1);
+                                graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->moveAble = 1;
                             }
                         }
                         else if(toggleCollisionsMode)
                         {
-                            if(static_cast<Cell*>(item)->getCollisionAble())
+                            if(graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->collisionAble)
                             {
-                                static_cast<Cell*>(item)->setCollisionAble(0);
+                                graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->collisionAble = 0;
                             }
                             else
                             {
-                                static_cast<Cell*>(item)->setCollisionAble(1);
+                                graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->collisionAble = 1;
                             }
                         }
-                        else if(removeAllBoundsMode)
+                        /*else if(removeAllBoundsMode)
                         {
                             static_cast<Cell*>(item)->removeAllConnections();
-                        }
+                        }*/
                     }
                 }
                 selector->stop();
                 delete selectionZone;
                 selectionZone = 0;
-            }*/
+            }
 
             if(speedLine != 0)
             {
@@ -561,9 +559,6 @@ void MainWindow::sceneInteracted(quint8 button, quint8 event)
                 graphicsView->cells.cells.last()->moveAble = true;
                 graphicsView->cells.cells.last()->collisionAble = true;
                 graphicsView->cells.cells.last()->speed = QVector2D(graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(QCursor::pos()).y()).x() - bufferPosition.x(), graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(QCursor::pos()).y()).y() - bufferPosition.y());
-                //bufferCell->setMoveAble(1);
-                //bufferCell->setCollisionAble(1);
-                //bufferCell->setSpeed(QVector2D(graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(QCursor::pos()).y()).x() - bufferPosition.x(), graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(QCursor::pos()).y()).y() - bufferPosition.y()));
                 bufferCell = 0;
             }
         }

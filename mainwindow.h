@@ -74,7 +74,7 @@ public slots:
     void removeAllConnectionsButSlot();
     void grabButSlot();
     void createTypeButSlot();
-    //void cellInteracted(Cell* cell, quint8 mouseButton, quint8 event);
+    void cellInteracted(quint16 cell, quint8 mouseButton, quint8 event);
     void myToolbarClicked(QAbstractButton* button);
     void slotGrabberAlarm();
     void myToolbar2Clicked(QAbstractButton* button);

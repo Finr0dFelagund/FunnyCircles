@@ -74,6 +74,7 @@ void MyQGraphicsView::addCell(CellType *type, QVector2D position, QVector2D spee
     circles.append(new QGraphicsEllipseItem(0, 0, type->size, type->size));
     circles.last()->setPos(position.x() - cells.cells.last()->type->size/2, position.y() - cells.cells.last()->type->size/2);
     circles.last()->setBrush(type->brush);
+    circles.last()->setData(0, "cell");
     scene.addItem(circles.last());
 }
 
@@ -102,7 +103,7 @@ void MyQGraphicsView::mousePressEvent(QMouseEvent *event)
     }
     else if(scene.itemAt(mapToScene(event->pos()), QTransform()) && scene.itemAt(mapToScene(event->pos()), QTransform())->data(0).toString() == "cell")
     {
-        //emit mouseInteractSignal((scene.itemAt(mapToScene(event->pos()), QTransform())), button, 0);
+        emit mouseInteractSignal(circles.indexOf(scene.itemAt(mapToScene(event->pos()), QTransform())), button, 0);
     }
 }
 
@@ -124,7 +125,7 @@ void MyQGraphicsView::mouseReleaseEvent(QMouseEvent *event)
     }
     else if(scene.itemAt(mapToScene(event->pos()), QTransform()) && scene.itemAt(mapToScene(event->pos()), QTransform())->data(0).toString() == "cell")
     {
-        //emit mouseInteractSignal(static_cast<Cell*>(scene.itemAt(mapToScene(event->pos()), QTransform())), button, 1);
+        emit mouseInteractSignal(circles.indexOf(scene.itemAt(mapToScene(event->pos()), QTransform())), button, 1);
     }
 }
 

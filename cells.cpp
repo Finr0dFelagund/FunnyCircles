@@ -34,6 +34,17 @@ void Cells::removeConnect(quint16 ind)
     connectionsInd[1].remove(ind);
 }
 
+/*void Cells::removeAllConnections()
+{
+    for(quint16 i = 0; i < cells.size(); i++)
+    {
+        if(i != cells.indexOf(this))
+        {
+            removeConnect(i);
+        }
+    }
+}*/
+
 bool Cells::tryToConnect(quint16 a, quint16 b)
 {
     bool result = false;

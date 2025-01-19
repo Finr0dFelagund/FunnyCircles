@@ -23,7 +23,8 @@ public:
 
     static QVector<CellType*> types;
 
-    static CellType* newType(QBrush brushx, qreal (*forcex)(qreal, qreal, qreal), QVector<qint8> interDirectx, qreal sizex, qreal massx, qreal frictionCoeffx, qreal hardnessFactorx, QVector<qint8> maxConnectionsNumberx,
+    static CellType* newType(QBrush brushx, qreal (*forcex)(qreal, qreal, qreal), QVector<qint8> interDirectx, qreal sizex, qreal massx, qreal frictionCoeffx,
+                             qreal hardnessFactorx, QVector<qint8> maxConnectionsNumberx,
                              QVector<qint8> interDirectOtherx, QVector<qint8> maxConnectionsNumberOtherx, QString namex);
     static void removeType(CellType *id);
 };

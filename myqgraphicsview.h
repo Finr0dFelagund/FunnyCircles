@@ -43,7 +43,7 @@ public slots:
 
 signals:
     void signalInteract(quint8 button, quint8 eventx);
-    void mouseInteractSignal(Cell* cell, quint8 button, quint8 eventx);
+    void mouseInteractSignal(quint16 cell, quint8 button, quint8 eventx);
 };
 
 #endif // MYQGRAPHICSVIEW_H
