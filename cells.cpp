@@ -12,19 +12,23 @@ void Cells::addCell(QVector2D pos, QVector2D spd, CellType* tp)
 
 void Cells::deleteCell(quint16 id)
 {
+    removeAllConnections(id);
     delete cells[id];
     cells.remove(id);
     for(quint16 i = 0; i < connectionsInd[0].size(); i++)
     {
-        if(connectionsInd[0][i] == id || connectionsInd[1][i] == id)
+        if(connectionsInd[0][i] > id)
         {
-            removeConnect(i);
-            i--;
+            connectionsInd[0][i]--;
+        }
+        if(connectionsInd[1][i] > id)
+        {
+            connectionsInd[1][i]--;
         }
     }
 }
 
-void Cells::removeConnect(quint16 ind)
+void Cells::removeConnect(quint16 ind)//ind - index of bound
 {
     cells[connectionsInd[0][ind]]->numberOfTypeConnections[cells[connectionsInd[1][ind]]->type->number]--;
     cells[connectionsInd[0][ind]]->numberOfTypeConnections.last()--;
@@ -34,16 +38,29 @@ void Cells::removeConnect(quint16 ind)
     connectionsInd[1].remove(ind);
 }
 
-/*void Cells::removeAllConnections()
+void Cells::removeAllConnections(quint16 ind)//ind - ind of cell
 {
-    for(quint16 i = 0; i < cells.size(); i++)
+    for(quint16 i = 0; i < connectionsInd[0].size(); i++)
     {
-        if(i != cells.indexOf(this))
+        if(connectionsInd[0][i] == ind || connectionsInd[1][i] == ind)
         {
             removeConnect(i);
+            i--;
         }
     }
-}*/
+}
+
+void Cells::removeConnect(quint16 a, quint16 b)
+{
+    for(quint16 i = 0; i < connectionsInd[0].size(); i++)
+    {
+        if((connectionsInd[0][i] == b && connectionsInd[1][i] == a) || (connectionsInd[0][i] == a && connectionsInd[1][i] == b))
+        {
+            removeConnect(i);
+            break;
+        }
+    }
+}
 
 bool Cells::tryToConnect(quint16 a, quint16 b)
 {

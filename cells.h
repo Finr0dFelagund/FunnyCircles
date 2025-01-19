@@ -28,9 +28,10 @@ public:
     void addCell(QVector2D pos, QVector2D spd, CellType* tp);
     void deleteCell(quint16 id);
     void removeConnect(quint16 ind);
-    //void removeAllConnections();
+    void removeAllConnections(quint16 ind);
 
     bool tryToConnect(quint16 a, quint16 b);
+    void removeConnect(quint16 a, quint16 b);
     void createConnections();
     void calcForces();
     void applyDeltas();

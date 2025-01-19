@@ -353,23 +353,11 @@ void MainWindow::cellInteracted(quint16 cell, quint8 mouseButton, quint8 event)
                     graphicsView->cells.cells[cell]->collisionAble = 1;
                 }
             }
-            /*else if(removeAllBoundsMode)
+            else if(removeAllBoundsMode)
             {
-                graphicsView->cells.cells[cell].;
-            }*/
-            /*else if(boundMode)
-            {
-                if(bufferCell == 0)
-                {
-                    bufferCell = cell;
-                }
-                else
-                {
-                    Cell::tryConnect(bufferCell, cell);
-                    bufferCell = 0;
-                }
-            }*/
-            /*else if(unBoundMode)
+                graphicsView->cells.removeAllConnections(cell);
+            }
+            else if(boundMode)
             {
                 if(bufferCell == 0)
                 {
@@ -377,10 +365,22 @@ void MainWindow::cellInteracted(quint16 cell, quint8 mouseButton, quint8 event)
                 }
                 else
                 {
-                    Cell::removeConnect(bufferCell, cell);
+                    graphicsView->cells.tryToConnect(bufferCell, cell);
                     bufferCell = 0;
                 }
-            }*/
+            }
+            else if(unBoundMode)
+            {
+                if(bufferCell == 0)
+                {
+                    bufferCell = cell;
+                }
+                else
+                {
+                    graphicsView->cells.removeConnect(bufferCell, cell);
+                    bufferCell = 0;
+                }
+            }
             else if(grabMode)
             {
                 bufferCell = cell;
@@ -540,10 +540,10 @@ void MainWindow::sceneInteracted(quint8 button, quint8 event)
                                 graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->collisionAble = 1;
                             }
                         }
-                        /*else if(removeAllBoundsMode)
+                        else if(removeAllBoundsMode)
                         {
-                            static_cast<Cell*>(item)->removeAllConnections();
-                        }*/
+                            graphicsView->cells.removeAllConnections(graphicsView->circles.indexOf(item));
+                        }
                     }
                 }
                 selector->stop();
