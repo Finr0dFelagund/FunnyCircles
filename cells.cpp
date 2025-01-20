@@ -1,8 +1,22 @@
 #include "cells.h"
 
 Cells::Cells()
+    :tickDone(true)
 {
     connectionsInd = QVector<QVector<quint16>>(2);
+    for(int i = 0; i < GLOBALVARS::numOfThreads; i++)
+    {
+        threadWorkers.append(new CellTickProcesser(&cells, &connectionsInd));
+        threads.append(new QThread());
+        threadWorkers[i]->moveToThread(threads[i]);
+        stateOfApply.append(false);
+        stateOfCalc.append(false);
+        connect(threadWorkers[i], SIGNAL(calculationReady(QThread*)), this, SLOT(calculationDoneSlot(QThread*)));
+        connect(threadWorkers[i], SIGNAL(applyingDeltasReady(QThread*)), this, SLOT(applyDeltasDoneSlot(QThread*)));
+        connect(this, SIGNAL(calculate(QThread*,quint16,quint16)), threadWorkers[i], SLOT(calculate(QThread*,quint16,quint16)));
+        connect(this, SIGNAL(applyDeltas(QThread*,quint16,quint16)), threadWorkers[i], SLOT(applyDeltas(QThread*,quint16,quint16)));
+        threads[i]->start();
+    }
 }
 
 void Cells::addCell(QVector2D pos, QVector2D spd, CellType* tp)
@@ -95,132 +109,43 @@ bool Cells::tryToConnect(quint16 a, quint16 b)
     return result;
 }
 
-void Cells::createConnections()
+void Cells::applyDeltasDoneSlot(QThread* thr)
 {
-    for(quint16 i = 0; i < cells.size() - 1; i++)
+    stateOfApply[threads.indexOf(thr)] = true;
+    for(int i = 0; i < threads.size(); i++)
     {
-        for(quint16 j = i + 1; j < cells.size(); j++)
-        {
-            tryToConnect(i, j);
-        }
+        if(stateOfCalc[i] == false)
+            return;
+    }
+    tickDone = true;
+    for(int i = 0; i < GLOBALVARS::numOfThreads; i++)
+    {
+        stateOfApply[i] = false;
+        stateOfCalc[i] = false;
     }
 }
 
-void Cells::calcForces()
+void Cells::calculationDoneSlot(QThread* thr)
 {
-    QVector2D routeJtoI;
-    qreal distance;
-    Cell *dealer, *consumer;
-    for(quint16 i = 0; i < cells.size(); i++)
+    stateOfCalc[threads.indexOf(thr)] = true;
+    for(int i = 0; i < threads.size(); i++)
     {
-        cells[i]->sumForce.setX(0);
-        cells[i]->sumForce.setY(0);
+        if(stateOfCalc[i] == false)
+            return;
     }
-    if(GLOBALVARS::enableGravity)//gravity forces
+    for(int i = 0; i < threads.size() - 1; i++)
     {
-        QVector2D fieldForce;
-        for(quint16 i = 0; i < cells.size(); i++)
-        {
-            consumer = cells[i];
-            for(quint16 j = 0; j < cells.size(); j++)
-            {
-                dealer = cells[j];
-                if(consumer != dealer)
-                {
-                    routeJtoI = (consumer->position - dealer->position).normalized();
-                    distance = consumer->position.distanceToPoint(dealer->position);
-                    fieldForce = routeJtoI * dealer->type->force(distance, consumer->type->mass, dealer->type->mass) *
-                            dealer->type->interactDirection[consumer->type->number]/**((distance > (consumer->type->size + dealer->type->size)/2) ? 1 : 0)*/;//getting force from field of dealer
-                    consumer->sumForce += fieldForce;
-                }
-            }
-        }
+        emit applyDeltas(threads[i], i*(cells.size()/GLOBALVARS::numOfThreads), (i+1)*(cells.size()/GLOBALVARS::numOfThreads));
     }
-    if(GLOBALVARS::enableFriction)//friction forces
-    {
-        for(quint16 i = 0; i < cells.size(); i++)
-        {
-            cells[i]->sumForce += cells[i]->speed.normalized() * (-1) * cells[i]->type->mass * cells[i]->type->frictionCoeff * GLOBALVARS::gravityAcceleration;
-        }
-    }
-    if(GLOBALVARS::enableBounds)//bound forces
-    {
-        QVector2D route0to1, boundForse;
-        qreal distance, boundEnergy;
-        for(qint16 i = 0; i < connectionsInd[0].size(); i++)
-        {
-            route0to1 = (cells[connectionsInd[1][i]]->position - cells[connectionsInd[0][i]]->position).normalized();
-            distance = cells[connectionsInd[0][i]]->position.distanceToPoint(cells[connectionsInd[1][i]]->position) -
-                       (cells[connectionsInd[0][i]]->type->size + cells[connectionsInd[1][i]]->type->size)/2;
-            distance = distance > 0 ? distance : 0;
-            boundForse = route0to1 * distance * GLOBALVARS::boundStiffnessFactor;
-            boundEnergy = GLOBALVARS::boundStiffnessFactor * distance / sqrt(sqrt(cells[connectionsInd[0][i]]->type->mass + cells[connectionsInd[1][i]]->type->mass));
-            if(boundEnergy < GLOBALVARS::maxBoundEnergy)
-            {
-                cells[connectionsInd[0][i]]->sumForce += boundForse;
-                cells[connectionsInd[1][i]]->sumForce -= boundForse;
-            }
-            else
-            {
-                removeConnect(i);
-                i--;
-            }
-        }
-    }
-    if(GLOBALVARS::enableCollisions)//CollisionForces
-    {
-        qreal elongation;
-        QVector2D elasticForce;
-        for(quint16 i = 0; i < cells.size() - 1; i++)
-        {
-            consumer = cells[i];
-            for(quint16 j = i + 1; j < cells.size(); j++)
-            {
-                dealer = cells[j];
-                if(consumer->collisionAble && dealer->collisionAble)
-                {
-                    routeJtoI = (consumer->position - dealer->position).normalized();
-                    distance = consumer->position.distanceToPoint(dealer->position);
-                    elongation = (consumer->type->hardnessFactor == 0 || dealer->type->hardnessFactor == 0 || distance > (consumer->type->size + dealer->type->size)/2 ) ? 0 :
-                                     ((consumer->type->size + dealer->type->size)/2 - distance) / (dealer->type->hardnessFactor/consumer->type->hardnessFactor + 1);
-                    elasticForce = pow(elongation, 4) * dealer->type->hardnessFactor * routeJtoI;
-                    consumer->sumForce += elasticForce;
-                    elongation *= (dealer->type->hardnessFactor/consumer->type->hardnessFactor);
-                    elasticForce = pow(elongation, 4) * consumer->type->hardnessFactor * (-1) * routeJtoI;
-                    dealer->sumForce += elasticForce;
-                }
-            }
-        }
-    }
+    emit applyDeltas(threads.last(), (threads.size() - 1)*(cells.size()/GLOBALVARS::numOfThreads), cells.size());
 }
 
-inline void Cells::applyDeltas()
+void Cells::tick()
 {
-    for(quint16 i = 0; i < cells.size(); i++)
+    tickDone = false;
+    for(int i = 0; i < threads.size() - 1; i++)
     {
-        cells[i]->acceleration = cells[i]->sumForce / cells[i]->type->mass;
-        cells[i]->speed += cells[i]->acceleration * GLOBALVARS::updateTime/1000;
-        if(GLOBALVARS::maxSpeed != -1 && cells[i]->speed.length() > GLOBALVARS::maxSpeed) cells[i]->speed = cells[i]->speed.normalized() * GLOBALVARS::maxSpeed;
-        if(cells[i]->moveAble) cells[i]->position += cells[i]->speed*GLOBALVARS::updateTime/1000;
+        emit calculate(threads[i], i*(cells.size()/GLOBALVARS::numOfThreads), (i+1)*(cells.size()/GLOBALVARS::numOfThreads));
     }
-}
-
-void Cells::onTick(quint8 numOfTicks)
-{
-    for(quint8 i = 0; i < numOfTicks; i++)
-    {
-        if(GLOBALVARS::enableBounds)
-        {
-            createConnections();
-        }
-        else
-        {
-            while(connectionsInd[0].size() > 0)
-            {
-                removeConnect(0);
-            }
-        }
-        calcForces();
-        applyDeltas();
-    }
+    emit calculate(threads.last(), (threads.size() - 1)*(cells.size()/GLOBALVARS::numOfThreads), cells.size());
 }
