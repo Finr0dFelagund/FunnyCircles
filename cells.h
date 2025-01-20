@@ -3,27 +3,21 @@
 
 #include <QVector>
 #include <QVector2D>
-#include "celltype.h"
 #include "globalvars.h"
+#include "celltickprocesser.h"
 
-struct Cell
-{
-    QVector2D acceleration;
-    QVector2D speed;
-    QVector2D position;
-    QVector2D sumForce;
-    CellType* type;
-    QVector<quint8> numberOfTypeConnections;//last is the whole connections
-    bool moveAble;
-    bool collisionAble;
-};
 
-class Cells
+class Cells : public QObject
 {
+    Q_OBJECT
 public:
     Cells();
     QVector<Cell*> cells;
     QVector<QVector<quint16>> connectionsInd; //2*connections number with ell indexes
+    QVector<CellTickProcesser*> threadWorkers;
+    QVector<QThread*> threads;
+    QVector<bool> stateOfCalc, stateOfApply;
+    bool tickDone;
 
     void addCell(QVector2D pos, QVector2D spd, CellType* tp);
     void deleteCell(quint16 id);
@@ -32,11 +26,15 @@ public:
 
     bool tryToConnect(quint16 a, quint16 b);
     void removeConnect(quint16 a, quint16 b);
-    void createConnections();
-    void calcForces();
-    void applyDeltas();
 
-    void onTick(quint8 numOfTicks);
+    void tick();
+
+public slots:
+    void calculationDoneSlot(QThread *thr);
+    void applyDeltasDoneSlot(QThread *thr);
+signals:
+    void calculate(QThread* thr, quint16 startInd, quint16 endInd);
+    void applyDeltas(QThread* thr, quint16 startInd, quint16 endInd);
 };
 
 #endif // CELLS_H

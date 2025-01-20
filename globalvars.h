@@ -17,6 +17,7 @@ namespace GLOBALVARS
     extern bool enableCollisions;
     extern int enableFriction;
     extern int slowModeRait;
+    extern int numOfThreads;
 
     extern qreal force(qreal x, qreal m1, qreal m2);
 }
