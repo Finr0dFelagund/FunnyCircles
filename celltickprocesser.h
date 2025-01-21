@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QThread>
-//#include "cells.h"
 #include "globalvars.h"
 #include <QVector2D>
 #include "celltype.h"
@@ -27,6 +26,7 @@ public:
     CellTickProcesser(QVector<Cell*> *cellArray_, QVector<QVector<quint16>>* connectionsIndArray_);
     QVector<Cell*> *cellArray;
     QVector<QVector<quint16>>* connectionsIndArray;
+    static QMutex Mutex1;
 
     void calcForces(quint16 startInd, quint16 endInd);
     void createConnections(quint16 startInd, quint16 endInd);

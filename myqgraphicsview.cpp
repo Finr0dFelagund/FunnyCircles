@@ -17,10 +17,7 @@ MyQGraphicsView::MyQGraphicsView(QWidget *parent)
 
 void MyQGraphicsView::slotTickerAlarm()
 {
-    if(cells.tickDone)
-    {
-        cells.tick();
-    }
+    cells.tick();
 }
 
 void MyQGraphicsView::slotDrawerAlarm()

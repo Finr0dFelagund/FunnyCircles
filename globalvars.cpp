@@ -14,7 +14,7 @@ namespace GLOBALVARS
     bool enableCollisions = true;
     int enableFriction = 0;
     int slowModeRait = 1000;//255 - max
-    int numOfThreads = 8;
+    int numOfThreads = 64;
 
     qreal force(qreal x, qreal m1, qreal m2)
     {

@@ -142,10 +142,13 @@ void Cells::calculationDoneSlot(QThread* thr)
 
 void Cells::tick()
 {
-    tickDone = false;
-    for(int i = 0; i < threads.size() - 1; i++)
+    if(tickDone)
     {
-        emit calculate(threads[i], i*(cells.size()/GLOBALVARS::numOfThreads), (i+1)*(cells.size()/GLOBALVARS::numOfThreads));
+        tickDone = false;
+        for(int i = 0; i < threads.size() - 1; i++)
+        {
+            emit calculate(threads[i], i*(cells.size()/GLOBALVARS::numOfThreads), (i+1)*(cells.size()/GLOBALVARS::numOfThreads));
+        }
+        emit calculate(threads.last(), (threads.size() - 1)*(cells.size()/GLOBALVARS::numOfThreads), cells.size());
     }
-    emit calculate(threads.last(), (threads.size() - 1)*(cells.size()/GLOBALVARS::numOfThreads), cells.size());
 }
