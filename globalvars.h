@@ -2,6 +2,7 @@
 #define GLOBALVARS_H
 
 #include <QtCore>
+#include <QMutex>
 
 namespace GLOBALVARS
 {

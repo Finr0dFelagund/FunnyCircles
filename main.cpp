@@ -11,13 +11,9 @@ int main(int argc, char *argv[])
     w.show();
     for(int i = 0; i < 5; i++)
     {
-<<<<<<< HEAD
-        for(int j = 0; j < 1000; j++)
-=======
         for(int j = 0; j < 100; j++)
->>>>>>> 7e626e6 (Racing in the collisions)
         {
-            w.graphicsView->addCell(CellType::types[i], QVector2D(QRandomGenerator::global()->generate()%1000, QRandomGenerator::global()->generate()%1000), QVector2D(0, 0));
+            w.graphicsView->addCell(CellType::types[i], QVector2D(QRandomGenerator::global()->generate()%5000, QRandomGenerator::global()->generate()%5000), QVector2D(0, 0));
         }
     }
     /*w.graphicsView->addCell(CellType::types[4], QVector2D(500, 500), QVector2D(0, 0));
