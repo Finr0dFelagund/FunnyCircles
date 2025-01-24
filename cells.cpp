@@ -1,21 +1,19 @@
 #include "cells.h"
+#include "globalvars.h"
 
 Cells::Cells()
     :tickDone(true), threadsDoneWork(0)
 {
-    connectionsInd = QVector<QVector<quint16>>(2);
     for(int i = 0; i < GLOBALVARS::numOfThreads; i++)
     {
-        threadWorkers.append(new CellTickProcesser(&cells, &connectionsInd));
+        threadWorkers.append(new CellTickProcesser(&cells));
         threads.append(new QThread());
         threadWorkers[i]->moveToThread(threads[i]);
-        //stateOfApply.append(false);
-        //stateOfCalc.append(false);
         connect(threadWorkers[i], SIGNAL(calculationReady(QThread*)), this, SLOT(calculationDoneSlot(QThread*)));
         connect(threadWorkers[i], SIGNAL(applyingDeltasReady(QThread*)), this, SLOT(applyDeltasDoneSlot(QThread*)));
         connect(this, SIGNAL(calculate(QThread*,quint16,quint16)), threadWorkers[i], SLOT(calculate(QThread*,quint16,quint16)));
         connect(this, SIGNAL(applyDeltas(QThread*,quint16,quint16)), threadWorkers[i], SLOT(applyDeltas(QThread*,quint16,quint16)));
-        threads[i]->start();
+        threads[i]->start(QThread::LowPriority);
     }
 }
 
@@ -29,7 +27,7 @@ void Cells::deleteCell(quint16 id)
     removeAllConnections(id);
     delete cells[id];
     cells.remove(id);
-    for(quint16 i = 0; i < connectionsInd[0].size(); i++)
+    /*for(quint16 i = 0; i < connectionsInd[0].size(); i++)
     {
         if(connectionsInd[0][i] > id)
         {
@@ -39,47 +37,47 @@ void Cells::deleteCell(quint16 id)
         {
             connectionsInd[1][i]--;
         }
-    }
+    }*/
 }
 
 void Cells::removeConnect(quint16 ind)//ind - index of bound
 {
-    cells[connectionsInd[0][ind]]->numberOfTypeConnections[cells[connectionsInd[1][ind]]->type->number]--;
+    /*cells[connectionsInd[0][ind]]->numberOfTypeConnections[cells[connectionsInd[1][ind]]->type->number]--;
     cells[connectionsInd[0][ind]]->numberOfTypeConnections.last()--;
     cells[connectionsInd[1][ind]]->numberOfTypeConnections[cells[connectionsInd[0][ind]]->type->number]--;
     cells[connectionsInd[1][ind]]->numberOfTypeConnections.last()--;
     connectionsInd[0].remove(ind);
-    connectionsInd[1].remove(ind);
+    connectionsInd[1].remove(ind);*/;
 }
 
 void Cells::removeAllConnections(quint16 ind)//ind - ind of cell
 {
-    for(quint16 i = 0; i < connectionsInd[0].size(); i++)
+    /*for(quint16 i = 0; i < connectionsInd[0].size(); i++)
     {
         if(connectionsInd[0][i] == ind || connectionsInd[1][i] == ind)
         {
             removeConnect(i);
             i--;
         }
-    }
+    }*/;
 }
 
 void Cells::removeConnect(quint16 a, quint16 b)
 {
-    for(quint16 i = 0; i < connectionsInd[0].size(); i++)
+    /*for(quint16 i = 0; i < connectionsInd[0].size(); i++)
     {
         if((connectionsInd[0][i] == b && connectionsInd[1][i] == a) || (connectionsInd[0][i] == a && connectionsInd[1][i] == b))
         {
             removeConnect(i);
             break;
         }
-    }
+    }*/;
 }
 
 bool Cells::tryToConnect(quint16 a, quint16 b)
 {
     bool result = false;
-    if(GLOBALVARS::enableBounds)
+    /*if(GLOBALVARS::enableBounds)
     {
         Cell *consumer = cells[a], *dealer = cells[b];
         qreal distance = consumer->position.distanceToPoint(dealer->position) - (consumer->type->size + dealer->type->size)/2;
@@ -105,18 +103,12 @@ bool Cells::tryToConnect(quint16 a, quint16 b)
                 result = true;
             }
         }
-    }
+    }*/
     return result;
 }
 
 void Cells::applyDeltasDoneSlot(QThread* thr)
 {
-    /*stateOfApply[threads.indexOf(thr)] = true;
-    for(int i = 0; i < threads.size(); i++)
-    {
-        if(stateOfCalc[i] == false)
-            return;
-    }*/
     threadsDoneWork++;
     if(threadsDoneWork < GLOBALVARS::numOfThreads)
     {
@@ -124,21 +116,10 @@ void Cells::applyDeltasDoneSlot(QThread* thr)
     }
     threadsDoneWork = 0;
     tickDone = true;
-    /*for(int i = 0; i < GLOBALVARS::numOfThreads; i++)
-    {
-        stateOfApply[i] = false;
-        stateOfCalc[i] = false;
-    }*/
 }
 
 void Cells::calculationDoneSlot(QThread* thr)
 {
-    /*stateOfCalc[threads.indexOf(thr)] = true;
-    for(int i = 0; i < threads.size(); i++)
-    {
-        if(stateOfCalc[i] == false)
-            return;
-    }*/
     threadsDoneWork++;
     if(threadsDoneWork < GLOBALVARS::numOfThreads)
     {

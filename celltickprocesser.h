@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QThread>
-#include "globalvars.h"
 #include <QVector2D>
 #include "celltype.h"
 
@@ -17,21 +16,20 @@ struct Cell
     QVector<quint8> numberOfTypeConnections;//last is the whole connections
     bool moveAble;
     bool collisionAble;
+    QVector<quint16> connectionsInd;
+    QMutex mutex;
 };
 
 class CellTickProcesser : public QObject
 {
     Q_OBJECT
 public:
-    CellTickProcesser(QVector<Cell*> *cellArray_, QVector<QVector<quint16>>* connectionsIndArray_);
+    CellTickProcesser(QVector<Cell*> *cellArray_);
     QVector<Cell*> *cellArray;
-    QVector<QVector<quint16>>* connectionsIndArray;
-    static QMutex Mutex1;
 
     void calcForces(quint16 startInd, quint16 endInd);
     void createConnections(quint16 startInd, quint16 endInd);
-    void removeConnect(quint16 ind);
-    bool tryToConnect(quint16 a, quint16 b);
+    void removeConnections(quint16 startInd, quint16 endInd);
 
 public slots:
     void calculate(QThread* thr, quint16 startInd, quint16 endInd);

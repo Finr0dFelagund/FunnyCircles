@@ -1,26 +1,22 @@
 #include "celltickprocesser.h"
+#include "globalvars.h"
 
-QMutex CellTickProcesser::Mutex1;
-
-CellTickProcesser::CellTickProcesser(QVector<Cell*> *cellArray_, QVector<QVector<quint16>>* connectionsIndArray_)
-    :cellArray(cellArray_), connectionsIndArray(connectionsIndArray_)
+CellTickProcesser::CellTickProcesser(QVector<Cell*> *cellArray_)
+    :cellArray(cellArray_)
 {;}
 
 void CellTickProcesser::calculate(QThread* thr, quint16 startInd, quint16 endInd)
 {
     if(thr == QThread::currentThread())
     {
-        /*if(GLOBALVARS::enableBounds)
+        if(GLOBALVARS::enableBounds)
         {
-            createConnections();
+            createConnections(startInd, endInd);
         }
         else
         {
-            while(connectionsInd[0].size() > 0)
-            {
-                removeConnect(0);
-            }
-         }*/
+            removeConnections(startInd, endInd);
+         }
         calcForces(startInd, endInd);
         emit calculationReady(QThread::currentThread());
     }
@@ -43,56 +39,69 @@ void CellTickProcesser::applyDeltas(QThread* thr, quint16 startInd, quint16 endI
 
 void CellTickProcesser::createConnections(quint16 startInd, quint16 endInd)
 {
+    Cell *consumer, *dealer;
+    qreal distance, boundEnergy;
+    bool flag;
     for(quint16 i = startInd; i < endInd; i++)
     {
-        for(quint16 j = startInd + 1; j < (*cellArray).size(); j++)
+        for(quint16 j = 0; j < (*cellArray).size(); j++)
         {
-            tryToConnect(i, j);
+            if(GLOBALVARS::enableBounds)
+            {
+                flag = false;
+                consumer = (*cellArray)[i];
+                dealer = (*cellArray)[j];
+                distance = consumer->position.distanceToPoint(dealer->position) - (consumer->type->size + dealer->type->size)/2;
+                boundEnergy = GLOBALVARS::boundStiffnessFactor * ((distance > 0) ? distance : 0) / sqrt(sqrt(consumer->type->mass + dealer->type->mass));
+                if(consumer != dealer && boundEnergy < GLOBALVARS::maxBoundEnergy)
+                {
+                    for(quint16 k = 0; k < consumer->connectionsInd.size(); k++)
+                    {
+                        if(consumer->connectionsInd[k] == j)
+                        {
+                            flag = true;
+                            break;
+                        }
+                    }
+                    if(flag)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        (*cellArray)[i <= j ? i : j]->mutex.lock();
+                        (*cellArray)[i <= j ? j : i]->mutex.lock();
+                        if((consumer->numberOfTypeConnections[dealer->type->number] < consumer->type->maxConnectionsNumber[dealer->type->number] || consumer->type->maxConnectionsNumber[dealer->type->number] < 0) &&
+                            (dealer->numberOfTypeConnections[consumer->type->number] < dealer->type->maxConnectionsNumber[consumer->type->number] || dealer->type->maxConnectionsNumber[consumer->type->number] < 0) &&
+                            (consumer->numberOfTypeConnections.last() < consumer->type->maxConnectionsNumber.last() || consumer->type->maxConnectionsNumber.last() < 0) &&
+                            (dealer->numberOfTypeConnections.last() < dealer->type->maxConnectionsNumber.last() || dealer->type->maxConnectionsNumber.last() < 0))
+                        {
+                            consumer->connectionsInd.append(j);
+                            consumer->numberOfTypeConnections[dealer->type->number]++;
+                            consumer->numberOfTypeConnections.last()++;
+                            dealer->connectionsInd.append(i);
+                            dealer->numberOfTypeConnections[consumer->type->number]++;
+                            dealer->numberOfTypeConnections.last()++;
+                        }
+                        (*cellArray)[i <= j ? j : i]->mutex.unlock();
+                        (*cellArray)[i <= j ? i : j]->mutex.unlock();
+                    }
+                }
+            }
         }
     }
 }
 
-bool CellTickProcesser::tryToConnect(quint16 a, quint16 b)
+void CellTickProcesser::removeConnections(quint16 startInd, quint16 endInd)
 {
-    bool result = false;
-    if(GLOBALVARS::enableBounds)
+    for(quint16 i = startInd; i < endInd; i++)
     {
-        Cell *consumer = (*cellArray)[a], *dealer = (*cellArray)[b];
-        qreal distance = consumer->position.distanceToPoint(dealer->position) - (consumer->type->size + dealer->type->size)/2;
-        qreal boundEnergy = GLOBALVARS::boundStiffnessFactor * ((distance > 0) ? distance : 0) / sqrt(sqrt(consumer->type->mass + dealer->type->mass));
-        if(a!=b && boundEnergy < GLOBALVARS::maxBoundEnergy)
+        (*cellArray)[i]->connectionsInd.clear();
+        for(int j = 0; j < (*cellArray)[i]->numberOfTypeConnections.size(); j++)
         {
-            for(quint16 i = 0; i < (*connectionsIndArray)[0].size(); i++)
-            {
-                if(((*connectionsIndArray)[0][i] == a && (*connectionsIndArray)[1][i] == b) || ((*connectionsIndArray)[0][i] == b && (*connectionsIndArray)[1][i] == a))
-                    return false;
-            }
-            if((consumer->numberOfTypeConnections[dealer->type->number] < consumer->type->maxConnectionsNumber[dealer->type->number] || consumer->type->maxConnectionsNumber[dealer->type->number] < 0) &&
-                (dealer->numberOfTypeConnections[consumer->type->number] < dealer->type->maxConnectionsNumber[consumer->type->number] || dealer->type->maxConnectionsNumber[consumer->type->number] < 0) &&
-                (consumer->numberOfTypeConnections.last() < consumer->type->maxConnectionsNumber.last() || consumer->type->maxConnectionsNumber.last() < 0) &&
-                (dealer->numberOfTypeConnections.last() < dealer->type->maxConnectionsNumber.last() || dealer->type->maxConnectionsNumber.last() < 0))
-            {
-                (*connectionsIndArray)[0].append(a);
-                (*connectionsIndArray)[1].append(b);
-                consumer->numberOfTypeConnections[dealer->type->number]++;
-                consumer->numberOfTypeConnections.last()++;
-                dealer->numberOfTypeConnections[consumer->type->number]++;
-                dealer->numberOfTypeConnections.last()++;
-                result = true;
-            }
+            (*cellArray)[i]->numberOfTypeConnections[j] = 0;
         }
     }
-    return result;
-}
-
-void CellTickProcesser::removeConnect(quint16 ind)//ind - index of bound
-{
-    (*cellArray)[(*connectionsIndArray)[0][ind]]->numberOfTypeConnections[(*cellArray)[(*connectionsIndArray)[1][ind]]->type->number]--;
-    (*cellArray)[(*connectionsIndArray)[0][ind]]->numberOfTypeConnections.last()--;
-    (*cellArray)[(*connectionsIndArray)[1][ind]]->numberOfTypeConnections[(*cellArray)[(*connectionsIndArray)[0][ind]]->type->number]--;
-    (*cellArray)[(*connectionsIndArray)[1][ind]]->numberOfTypeConnections.last()--;
-    (*connectionsIndArray)[0].remove(ind);
-    (*connectionsIndArray)[1].remove(ind);
 }
 
 void CellTickProcesser::calcForces(quint16 startInd, quint16 endInd)
@@ -120,9 +129,7 @@ void CellTickProcesser::calcForces(quint16 startInd, quint16 endInd)
                     distance = consumer->position.distanceToPoint(dealer->position);
                     fieldForce = routeJtoI * dealer->type->force(distance, consumer->type->mass, dealer->type->mass) *
                                  dealer->type->interactDirection[consumer->type->number];//getting force from field of dealer
-                    //CellTickProcesser::Mutex1.lock();
                     consumer->sumForce += fieldForce;
-                    //CellTickProcesser::Mutex1.unlock();
                 }
             }
         }
@@ -134,30 +141,34 @@ void CellTickProcesser::calcForces(quint16 startInd, quint16 endInd)
             (*cellArray)[i]->sumForce += (*cellArray)[i]->speed.normalized() * (-1) * (*cellArray)[i]->type->mass * (*cellArray)[i]->type->frictionCoeff * GLOBALVARS::gravityAcceleration;
         }
     }
-    /*if(GLOBALVARS::enableBounds)//bound forces
+    if(GLOBALVARS::enableBounds)//bound forces
     {
-        QVector2D route0to1, boundForse;
+        QVector2D route0to1, route1to0, boundForse;
         qreal distance, boundEnergy;
-        for(qint16 i = 0; i < connectionsInd[0].size(); i++)
+        for(qint16 i = startInd; i < endInd; i++)
         {
-            route0to1 = (cells[connectionsInd[1][i]]->position - cells[connectionsInd[0][i]]->position).normalized();
-            distance = cells[connectionsInd[0][i]]->position.distanceToPoint(cells[connectionsInd[1][i]]->position) -
-                       (cells[connectionsInd[0][i]]->type->size + cells[connectionsInd[1][i]]->type->size)/2;
-            distance = distance > 0 ? distance : 0;
-            boundForse = route0to1 * distance * GLOBALVARS::boundStiffnessFactor;
-            boundEnergy = GLOBALVARS::boundStiffnessFactor * distance / sqrt(sqrt(cells[connectionsInd[0][i]]->type->mass + cells[connectionsInd[1][i]]->type->mass));
-            if(boundEnergy < GLOBALVARS::maxBoundEnergy)
+            for(int j = 0; j < (*cellArray)[i]->connectionsInd.size(); j++)
             {
-                cells[connectionsInd[0][i]]->sumForce += boundForse;
-                cells[connectionsInd[1][i]]->sumForce -= boundForse;
-            }
-            else
-            {
-                removeConnect(i);
-                i--;
+                route0to1 = ((*cellArray)[(*cellArray)[i]->connectionsInd[j]]->position - (*cellArray)[i]->position).normalized();
+                distance = (*cellArray)[(*cellArray)[i]->connectionsInd[j]]->position.distanceToPoint((*cellArray)[i]->position) -
+                           ((*cellArray)[(*cellArray)[i]->connectionsInd[j]]->type->size + (*cellArray)[i]->type->size)/2;
+                boundForse = route0to1 * distance * GLOBALVARS::boundStiffnessFactor;
+                boundEnergy = GLOBALVARS::boundStiffnessFactor * distance /
+                              sqrt(sqrt((*cellArray)[(*cellArray)[i]->connectionsInd[j]]->type->mass + (*cellArray)[i]->type->mass));
+                if(boundEnergy < GLOBALVARS::maxBoundEnergy)
+                {
+                    (*cellArray)[i]->sumForce += boundForse;
+                }
+                else
+                {
+                    (*cellArray)[i]->numberOfTypeConnections[(*cellArray)[(*cellArray)[i]->connectionsInd[j]]->type->number]--;
+                    (*cellArray)[i]->numberOfTypeConnections.last()--;
+                    (*cellArray)[i]->connectionsInd.remove(j);
+                    j--;
+                }
             }
         }
-    }*/
+    }
     if(GLOBALVARS::enableCollisions)//CollisionForces
     {
         qreal elongation;
@@ -173,16 +184,9 @@ void CellTickProcesser::calcForces(quint16 startInd, quint16 endInd)
                     routeJtoI = (consumer->position - dealer->position).normalized();
                     distance = consumer->position.distanceToPoint(dealer->position);
                     elongation = (consumer->type->hardnessFactor == 0 || dealer->type->hardnessFactor == 0 || distance > (consumer->type->size + dealer->type->size)/2 ) ? 0 :
-                                     ((consumer->type->size + dealer->type->size)/2 - distance) / (dealer->type->hardnessFactor/consumer->type->hardnessFactor + 1);
+                                     ((consumer->type->size + dealer->type->size)/2 - distance) / (consumer->type->hardnessFactor/dealer->type->hardnessFactor + 1);
                     elasticForce = pow(elongation, 4) * dealer->type->hardnessFactor * routeJtoI;
-                    //CellTickProcesser::Mutex1.lock();
                     consumer->sumForce += elasticForce;
-                    //CellTickProcesser::Mutex1.unlock();
-                    //elongation *= (dealer->type->hardnessFactor/consumer->type->hardnessFactor);
-                    //elasticForce = pow(elongation, 4) * consumer->type->hardnessFactor * (-1) * routeJtoI;
-                    //CellTickProcesser::Mutex1.lock();
-                    //dealer->sumForce += elasticForce;
-                    //CellTickProcesser::Mutex1.unlock();
                 }
             }
         }
