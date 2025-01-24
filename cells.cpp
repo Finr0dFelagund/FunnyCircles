@@ -1,7 +1,7 @@
 #include "cells.h"
 
 Cells::Cells()
-    :tickDone(true)
+    :tickDone(true), threadsDoneWork(0)
 {
     connectionsInd = QVector<QVector<quint16>>(2);
     for(int i = 0; i < GLOBALVARS::numOfThreads; i++)
@@ -9,8 +9,8 @@ Cells::Cells()
         threadWorkers.append(new CellTickProcesser(&cells, &connectionsInd));
         threads.append(new QThread());
         threadWorkers[i]->moveToThread(threads[i]);
-        stateOfApply.append(false);
-        stateOfCalc.append(false);
+        //stateOfApply.append(false);
+        //stateOfCalc.append(false);
         connect(threadWorkers[i], SIGNAL(calculationReady(QThread*)), this, SLOT(calculationDoneSlot(QThread*)));
         connect(threadWorkers[i], SIGNAL(applyingDeltasReady(QThread*)), this, SLOT(applyDeltasDoneSlot(QThread*)));
         connect(this, SIGNAL(calculate(QThread*,quint16,quint16)), threadWorkers[i], SLOT(calculate(QThread*,quint16,quint16)));
@@ -111,33 +111,45 @@ bool Cells::tryToConnect(quint16 a, quint16 b)
 
 void Cells::applyDeltasDoneSlot(QThread* thr)
 {
-    stateOfApply[threads.indexOf(thr)] = true;
+    /*stateOfApply[threads.indexOf(thr)] = true;
     for(int i = 0; i < threads.size(); i++)
     {
         if(stateOfCalc[i] == false)
             return;
+    }*/
+    threadsDoneWork++;
+    if(threadsDoneWork < GLOBALVARS::numOfThreads)
+    {
+        return;
     }
+    threadsDoneWork = 0;
     tickDone = true;
-    for(int i = 0; i < GLOBALVARS::numOfThreads; i++)
+    /*for(int i = 0; i < GLOBALVARS::numOfThreads; i++)
     {
         stateOfApply[i] = false;
         stateOfCalc[i] = false;
-    }
+    }*/
 }
 
 void Cells::calculationDoneSlot(QThread* thr)
 {
-    stateOfCalc[threads.indexOf(thr)] = true;
+    /*stateOfCalc[threads.indexOf(thr)] = true;
     for(int i = 0; i < threads.size(); i++)
     {
         if(stateOfCalc[i] == false)
             return;
+    }*/
+    threadsDoneWork++;
+    if(threadsDoneWork < GLOBALVARS::numOfThreads)
+    {
+        return;
     }
     for(int i = 0; i < threads.size() - 1; i++)
     {
         emit applyDeltas(threads[i], i*(cells.size()/GLOBALVARS::numOfThreads), (i+1)*(cells.size()/GLOBALVARS::numOfThreads));
     }
     emit applyDeltas(threads.last(), (threads.size() - 1)*(cells.size()/GLOBALVARS::numOfThreads), cells.size());
+    threadsDoneWork = 0;
 }
 
 void Cells::tick()

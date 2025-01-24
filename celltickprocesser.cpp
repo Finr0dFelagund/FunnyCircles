@@ -120,9 +120,9 @@ void CellTickProcesser::calcForces(quint16 startInd, quint16 endInd)
                     distance = consumer->position.distanceToPoint(dealer->position);
                     fieldForce = routeJtoI * dealer->type->force(distance, consumer->type->mass, dealer->type->mass) *
                                  dealer->type->interactDirection[consumer->type->number];//getting force from field of dealer
-                    CellTickProcesser::Mutex1.lock();
+                    //CellTickProcesser::Mutex1.lock();
                     consumer->sumForce += fieldForce;
-                    CellTickProcesser::Mutex1.unlock();
+                    //CellTickProcesser::Mutex1.unlock();
                 }
             }
         }
@@ -165,7 +165,7 @@ void CellTickProcesser::calcForces(quint16 startInd, quint16 endInd)
         for(quint16 i = startInd; i < endInd; i++)
         {
             consumer = (*cellArray)[i];
-            for(quint16 j = startInd + 1; j < (*cellArray).size(); j++)
+            for(quint16 j = 0; j < (*cellArray).size(); j++)
             {
                 dealer = (*cellArray)[j];
                 if(consumer->collisionAble && dealer->collisionAble)
@@ -175,14 +175,14 @@ void CellTickProcesser::calcForces(quint16 startInd, quint16 endInd)
                     elongation = (consumer->type->hardnessFactor == 0 || dealer->type->hardnessFactor == 0 || distance > (consumer->type->size + dealer->type->size)/2 ) ? 0 :
                                      ((consumer->type->size + dealer->type->size)/2 - distance) / (dealer->type->hardnessFactor/consumer->type->hardnessFactor + 1);
                     elasticForce = pow(elongation, 4) * dealer->type->hardnessFactor * routeJtoI;
-                    CellTickProcesser::Mutex1.lock();
+                    //CellTickProcesser::Mutex1.lock();
                     consumer->sumForce += elasticForce;
-                    CellTickProcesser::Mutex1.unlock();
-                    elongation *= (dealer->type->hardnessFactor/consumer->type->hardnessFactor);
-                    elasticForce = pow(elongation, 4) * consumer->type->hardnessFactor * (-1) * routeJtoI;
-                    CellTickProcesser::Mutex1.lock();
-                    dealer->sumForce += elasticForce;
-                    CellTickProcesser::Mutex1.unlock();
+                    //CellTickProcesser::Mutex1.unlock();
+                    //elongation *= (dealer->type->hardnessFactor/consumer->type->hardnessFactor);
+                    //elasticForce = pow(elongation, 4) * consumer->type->hardnessFactor * (-1) * routeJtoI;
+                    //CellTickProcesser::Mutex1.lock();
+                    //dealer->sumForce += elasticForce;
+                    //CellTickProcesser::Mutex1.unlock();
                 }
             }
         }
