@@ -3,7 +3,6 @@
 
 #include <QVector>
 #include <QVector2D>
-//#include "globalvars.h"
 #include "celltickprocesser.h"
 
 
@@ -13,20 +12,18 @@ class Cells : public QObject
 public:
     Cells();
     QVector<Cell*> cells;
-    QVector<QVector<quint16>> connectionsInd; //2*connections number with ell indexes
     QVector<CellTickProcesser*> threadWorkers;
     QVector<QThread*> threads;
-    //QVector<bool> stateOfCalc, stateOfApply;
     bool tickDone;
     quint8 threadsDoneWork;
 
     void addCell(QVector2D pos, QVector2D spd, CellType* tp);
     void deleteCell(quint16 id);
     void removeConnect(quint16 ind);
-    void removeAllConnections(quint16 ind);
+    void removeAllConnections(quint16 ind);//--
 
-    bool tryToConnect(quint16 a, quint16 b);
-    void removeConnect(quint16 a, quint16 b);
+    bool tryToConnect(quint16 a, quint16 b);//--
+    void removeConnect(quint16 a, quint16 b);//--
 
     void tick();
 

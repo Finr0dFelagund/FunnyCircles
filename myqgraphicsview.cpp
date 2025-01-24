@@ -26,25 +26,38 @@ void MyQGraphicsView::slotDrawerAlarm()
     {
         circles[i]->setPos(cells.cells[i]->position.x() - cells.cells[i]->type->size/2, cells.cells[i]->position.y() - cells.cells[i]->type->size/2);
     }
-    for(quint16 i = 0; i < cells.connectionsInd[0].size() - bounds.size(); i++)
+    quint16 boundsNumber = 0, buff = 0;
+    Cell *a, *b;
+    QVector2D atob;
+    for(quint16 i = 0; i < cells.cells.size(); i++)
+    {
+        boundsNumber += cells.cells[i]->connectionsInd.size();
+    }
+    boundsNumber/=2;
+    while(bounds.size() < boundsNumber)
     {
         bounds.append(new QGraphicsLineItem(0, 0, 0, 0));
         scene.addItem(bounds.last());
     }
-    while(bounds.size() > cells.connectionsInd[0].size())
+    while(bounds.size() > boundsNumber)
     {
         delete bounds.last();
         bounds.removeLast();
     }
-    Cell *a, *b;
-    QVector2D atob;
-    for(quint16 i = 0; i < bounds.size(); i++)
+    for(quint16 i = 0; i < cells.cells.size(); i++)
     {
-        a = cells.cells[cells.connectionsInd[0][i]];
-        b = cells.cells[cells.connectionsInd[1][i]];
-        atob = (b->position - a->position).normalized();
-        bounds[i]->setLine(a->position.x() + (atob * a->type->size/2).x(), a->position.y() + (atob * a->type->size/2).y(),
-                           b->position.x() - (atob * b->type->size/2).x(), b->position.y() - (atob * b->type->size/2).y());
+        for(quint8 j = 0; j < cells.cells[i]->connectionsInd.size(); j++)
+        {
+            if(cells.cells[i]->connectionsInd[j] > i && buff < boundsNumber)
+            {
+                a = cells.cells[i];
+                b = cells.cells[cells.cells[i]->connectionsInd[j]];
+                atob = (b->position - a->position).normalized();
+                bounds[buff]->setLine(a->position.x() + (atob * a->type->size/2).x(), a->position.y() + (atob * a->type->size/2).y(),
+                                      b->position.x() - (atob * b->type->size/2).x(), b->position.y() - (atob * b->type->size/2).y());
+                buff++;
+            }
+        }
     }
 }
 
