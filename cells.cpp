@@ -27,83 +27,103 @@ void Cells::deleteCell(quint16 id)
     removeAllConnections(id);
     delete cells[id];
     cells.remove(id);
-    /*for(quint16 i = 0; i < connectionsInd[0].size(); i++)
+    for(quint16 i = 0; i < cells.size(); i++)
     {
-        if(connectionsInd[0][i] > id)
+        for(quint8 j = 0; j < cells[i]->connectionsInd.size(); j++)
         {
-            connectionsInd[0][i]--;
+            if(cells[i]->connectionsInd[j] > id)
+            {
+                cells[i]->connectionsInd[j]--;
+            }
         }
-        if(connectionsInd[1][i] > id)
-        {
-            connectionsInd[1][i]--;
-        }
-    }*/
+    }
 }
 
-void Cells::removeConnect(quint16 ind)//ind - index of bound
+void Cells::removeAllConnections(quint16 ind)//ind - ind of cell BUUUUUUG
 {
-    /*cells[connectionsInd[0][ind]]->numberOfTypeConnections[cells[connectionsInd[1][ind]]->type->number]--;
-    cells[connectionsInd[0][ind]]->numberOfTypeConnections.last()--;
-    cells[connectionsInd[1][ind]]->numberOfTypeConnections[cells[connectionsInd[0][ind]]->type->number]--;
-    cells[connectionsInd[1][ind]]->numberOfTypeConnections.last()--;
-    connectionsInd[0].remove(ind);
-    connectionsInd[1].remove(ind);*/;
-}
-
-void Cells::removeAllConnections(quint16 ind)//ind - ind of cell
-{
-    /*for(quint16 i = 0; i < connectionsInd[0].size(); i++)
+    quint16 ind2;
+    quint8 i = 0;
+    while(i < cells[i]->connectionsInd.size())
     {
-        if(connectionsInd[0][i] == ind || connectionsInd[1][i] == ind)
-        {
-            removeConnect(i);
-            i--;
-        }
-    }*/;
+        ind2 = cells[i]->connectionsInd[i];
+        cells[ind <= ind2 ? ind : ind2]->mutex.lock();
+        cells[ind <= ind2 ? ind2 : ind]->mutex.lock();
+        cells[ind]->connectionsInd.remove(i);
+        cells[ind2]->connectionsInd.remove(cells[ind2]->connectionsInd.indexOf(ind));
+        cells[ind]->numberOfTypeConnections[cells[ind2]->type->number]--;
+        cells[ind]->numberOfTypeConnections.last()--;
+        cells[ind2]->numberOfTypeConnections[cells[ind]->type->number]--;
+        cells[ind2]->numberOfTypeConnections.last()--;
+        cells[ind <= ind2 ? ind2 : ind]->mutex.unlock();
+        cells[ind <= ind2 ? ind : ind2]->mutex.unlock();
+        i++;
+    }
 }
 
 void Cells::removeConnect(quint16 a, quint16 b)
 {
-    /*for(quint16 i = 0; i < connectionsInd[0].size(); i++)
+    for(quint8 i = 0; i < cells[a]->connectionsInd.size(); i++)
     {
-        if((connectionsInd[0][i] == b && connectionsInd[1][i] == a) || (connectionsInd[0][i] == a && connectionsInd[1][i] == b))
+        cells[a <= b ? a : b]->mutex.lock();
+        cells[a <= b ? b : a]->mutex.lock();
+        if(cells[a]->connectionsInd[i] == b)
         {
-            removeConnect(i);
+            cells[a]->connectionsInd.remove(i);
+            cells[b]->connectionsInd.remove(cells[b]->connectionsInd.indexOf(a));
+            cells[a]->numberOfTypeConnections[cells[b]->type->number]--;
+            cells[a]->numberOfTypeConnections.last()--;
+            cells[b]->numberOfTypeConnections[cells[a]->type->number]--;
+            cells[b]->numberOfTypeConnections.last()--;
+            cells[a <= b ? b : a]->mutex.unlock();
+            cells[a <= b ? a : b]->mutex.unlock();
             break;
         }
-    }*/;
+        cells[a <= b ? b : a]->mutex.unlock();
+        cells[a <= b ? a : b]->mutex.unlock();
+    }
 }
 
 bool Cells::tryToConnect(quint16 a, quint16 b)
 {
-    bool result = false;
-    /*if(GLOBALVARS::enableBounds)
+    bool result = true;
+    Cell* consumer = cells[a];
+    Cell* dealer = cells[b];
+    qreal distance = consumer->position.distanceToPoint(dealer->position) - (consumer->type->size + dealer->type->size)/2;
+    qreal boundEnergy = GLOBALVARS::boundStiffnessFactor * ((distance > 0) ? distance : 0) / sqrt(sqrt(consumer->type->mass + dealer->type->mass));
+    if(consumer != dealer && boundEnergy < GLOBALVARS::maxBoundEnergy)
     {
-        Cell *consumer = cells[a], *dealer = cells[b];
-        qreal distance = consumer->position.distanceToPoint(dealer->position) - (consumer->type->size + dealer->type->size)/2;
-        qreal boundEnergy = GLOBALVARS::boundStiffnessFactor * ((distance > 0) ? distance : 0) / sqrt(sqrt(consumer->type->mass + dealer->type->mass));
-        if(a!=b && boundEnergy < GLOBALVARS::maxBoundEnergy)
+        for(quint16 k = 0; k < consumer->connectionsInd.size(); k++)
         {
-            for(quint16 i = 0; i < connectionsInd[0].size(); i++)
+            if(consumer->connectionsInd[k] == b)
             {
-                if((connectionsInd[0][i] == a && connectionsInd[1][i] == b) || (connectionsInd[0][i] == b && connectionsInd[1][i] == a))
-                    return false;
+                result = false;
+                break;
             }
+        }
+        if(!result)
+        {
+            return result;
+        }
+        else
+        {
+            cells[a <= b ? a : b]->mutex.lock();
+            cells[a <= b ? b : a]->mutex.lock();
             if((consumer->numberOfTypeConnections[dealer->type->number] < consumer->type->maxConnectionsNumber[dealer->type->number] || consumer->type->maxConnectionsNumber[dealer->type->number] < 0) &&
                 (dealer->numberOfTypeConnections[consumer->type->number] < dealer->type->maxConnectionsNumber[consumer->type->number] || dealer->type->maxConnectionsNumber[consumer->type->number] < 0) &&
                 (consumer->numberOfTypeConnections.last() < consumer->type->maxConnectionsNumber.last() || consumer->type->maxConnectionsNumber.last() < 0) &&
                 (dealer->numberOfTypeConnections.last() < dealer->type->maxConnectionsNumber.last() || dealer->type->maxConnectionsNumber.last() < 0))
             {
-                connectionsInd[0].append(a);
-                connectionsInd[1].append(b);
+                consumer->connectionsInd.append(b);
                 consumer->numberOfTypeConnections[dealer->type->number]++;
                 consumer->numberOfTypeConnections.last()++;
+                dealer->connectionsInd.append(a);
                 dealer->numberOfTypeConnections[consumer->type->number]++;
                 dealer->numberOfTypeConnections.last()++;
-                result = true;
             }
+            cells[a <= b ? b : a]->mutex.unlock();
+            cells[a <= b ? a : b]->mutex.unlock();
         }
-    }*/
+    }
     return result;
 }
 
