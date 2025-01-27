@@ -13,18 +13,8 @@ int main(int argc, char *argv[])
     {
         for(int j = 0; j < 100; j++)
         {
-            w.graphicsView->addCell(CellType::types[i], QVector2D(QRandomGenerator::global()->generate()%500, QRandomGenerator::global()->generate()%500), QVector2D(0, 0));
+            w.graphicsView->addCell(CellType::types[i], QVector2D(QRandomGenerator::global()->generate()%1500, QRandomGenerator::global()->generate()%1500), QVector2D(0, 0));
         }
     }
-    /*w.graphicsView->addCell(CellType::types[4], QVector2D(500, 500), QVector2D(0, 0));
-    for(int i = 0; i < 30; i++)
-    {
-        w.graphicsView->addCell(CellType::types[0], QVector2D(500+qCos(3.14159*2/30*i)*300, 500+qSin(3.14159*2/30*i)*300), QVector2D(0, 0));
-    }
-    w.graphicsView->addCell(CellType::types[4], QVector2D(1200, 500), QVector2D(0, 0));
-    for(int i = 0; i < 30; i++)
-    {
-        w.graphicsView->addCell(CellType::types[0], QVector2D(1200+qCos(3.14159*2/30*i)*300, 500+qSin(3.14159*2/30*i)*300), QVector2D(0, 0));
-    }*/
     return a.exec();
 }

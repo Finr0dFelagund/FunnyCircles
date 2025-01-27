@@ -84,6 +84,7 @@ MainWindow::MainWindow(QWidget *parent) :
     toolbar->addButton(removeAllConnectionsBut, 7);
     toolbar->addButton(grabBut, 8);
     toolbar->addButton(createTypeBut, 9);
+    toolbar->setExclusive(false);
 
     foreach(QAbstractButton* but, toolbar->buttons())
     {
@@ -188,15 +189,18 @@ void  MainWindow::addCellButSlot()
 
 void  MainWindow::deleteCellButSlot()
 {
-    addMode = 0;
-    deleteMode = 1;
-    boundMode = 0;
-    unBoundMode = 0;
-    grabMode = 0;
-    stopMode = 0;
-    toggleMoveableMode = 0;
-    toggleCollisionsMode = 0;
-    removeAllBoundsMode = 0;
+    if(isSimulationStopped)
+    {
+        addMode = 0;
+        deleteMode = 1;
+        boundMode = 0;
+        unBoundMode = 0;
+        grabMode = 0;
+        stopMode = 0;
+        toggleMoveableMode = 0;
+        toggleCollisionsMode = 0;
+        removeAllBoundsMode = 0;
+    }
 }
 
 void MainWindow::toggleMoveableButSlot()
@@ -429,11 +433,18 @@ void MainWindow::myToolbar2Clicked(QAbstractButton *button)
         {
             graphicsView->startSimulation();
             isSimulationStopped = 0;
+            if(deleteMode)
+            {
+                deleteMode = 0;
+            }
+            deleteCellBut->setEnabled(false);
         }
         else
         {
             graphicsView->stopSimulation();
             isSimulationStopped = 1;
+            deleteCellBut->setEnabled(true);
+            deleteCellBut->setChecked(false);
         }
     }
     else if(button == toggleRenderBut)
