@@ -39,16 +39,15 @@ void Cells::deleteCell(quint16 id)
     }
 }
 
-void Cells::removeAllConnections(quint16 ind)//ind - ind of cell BUUUUUUG
+void Cells::removeAllConnections(quint16 ind)//ind - ind of cell
 {
     quint16 ind2;
-    quint8 i = 0;
-    while(i < cells[i]->connectionsInd.size())
+    while(cells[ind]->connectionsInd.size() > 0)
     {
-        ind2 = cells[i]->connectionsInd[i];
+        ind2 = cells[ind]->connectionsInd[0];
         cells[ind <= ind2 ? ind : ind2]->mutex.lock();
         cells[ind <= ind2 ? ind2 : ind]->mutex.lock();
-        cells[ind]->connectionsInd.remove(i);
+        cells[ind]->connectionsInd.remove(0);
         cells[ind2]->connectionsInd.remove(cells[ind2]->connectionsInd.indexOf(ind));
         cells[ind]->numberOfTypeConnections[cells[ind2]->type->number]--;
         cells[ind]->numberOfTypeConnections.last()--;
@@ -56,7 +55,6 @@ void Cells::removeAllConnections(quint16 ind)//ind - ind of cell BUUUUUUG
         cells[ind2]->numberOfTypeConnections.last()--;
         cells[ind <= ind2 ? ind2 : ind]->mutex.unlock();
         cells[ind <= ind2 ? ind : ind2]->mutex.unlock();
-        i++;
     }
 }
 
