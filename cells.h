@@ -22,6 +22,7 @@ public:
     void removeAllConnections(quint16 ind);
     bool tryToConnect(quint16 a, quint16 b);
     void removeConnect(quint16 a, quint16 b);
+    void adjustThreads();
 
     void tick();
 

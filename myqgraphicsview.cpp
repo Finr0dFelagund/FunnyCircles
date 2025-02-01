@@ -63,6 +63,7 @@ void MyQGraphicsView::slotDrawerAlarm()
 
 void MyQGraphicsView::startSimulation(quint16 period)
 {
+    cells.adjustThreads();
     ticker->start(period == 0 ? GLOBALVARS::simulationSpeed : period);
 }
 

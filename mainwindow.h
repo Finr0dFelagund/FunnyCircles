@@ -36,7 +36,7 @@ public:
     QWidget *toolbar2Widget;
     QHBoxLayout *toolbar2Layout;
     QButtonGroup *toolbar2;
-    QPushButton *toggleRenderBut, *toggleSimulationBut, *fillBut, *clearBut, *redBut;
+    QPushButton *toggleRenderBut, *toggleSimulationBut, *loadBut, *clearBut, *saveBut;
 
     quint8 standartButtonToolbarSize, standartButtonToolbar2Size;
     QPushButton* dividingToolbar2But;
@@ -85,7 +85,6 @@ public slots:
     void typeCreated();
     void cellChosenSlot(int id);
     void speedSettingSlot();
-
 };
 
 #endif // MAINWINDOW_H

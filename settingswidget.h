@@ -17,8 +17,10 @@ public:
 
     QGridLayout *layout;
     QCheckBox *bounds, *gravity, *friction, *collisions, *slowMode;
-    QSpinBox *maxSpeed, *maxBoundEnergy, *g, *updateTime, *boundStiffnessFactor, *redrawTime;
-    QLabel *boundsLabel, *gravityLabel, *frictionLabel, *collisionsLabel, *maxSpeedLabel, *maxBoundEnergyLabel, *gLabel, *updateTimeLabel, *boundStiffnessFactorLabel, *redrawTimeLabel, *settingsLabel, *slowModeLabel;
+    QSpinBox *maxSpeed, *maxBoundEnergy, *g, *updateTime, *boundStiffnessFactor, *redrawTime, *cellsPerThread;
+    QLabel *boundsLabel, *gravityLabel, *frictionLabel, *collisionsLabel, *maxSpeedLabel, *maxBoundEnergyLabel,
+            *gLabel, *updateTimeLabel, *boundStiffnessFactorLabel, *redrawTimeLabel, *settingsLabel, *slowModeLabel,
+            *cellsPerThreadLabel;
     QSettings *settings;
 
 public slots:
@@ -34,6 +36,7 @@ public slots:
     void updateTimeSlot(int datax);
     void boundStiffnessFactorSlot(int datax);
     void redrawTimeSlot(int datax);
+    void cellsPerThreadSlot(int datax);
 };
 
 #endif // SETTINGSWIDGET_H

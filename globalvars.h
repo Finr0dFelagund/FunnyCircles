@@ -19,6 +19,7 @@ namespace GLOBALVARS
     extern int enableFriction;
     extern int slowModeRait;
     extern int numOfThreads;
+    extern int cellsPerThread;
 
     extern qreal force(qreal x, qreal m1, qreal m2);
 }

@@ -15,6 +15,7 @@ namespace GLOBALVARS
     int enableFriction = 0;
     int slowModeRait = 1000;//255 - max
     int numOfThreads = 4;
+    int cellsPerThread = 100;
 
     qreal force(qreal x, qreal m1, qreal m2)
     {

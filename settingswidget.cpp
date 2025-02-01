@@ -15,6 +15,7 @@ SettingsWidget::SettingsWidget(QWidget *parent) : QWidget(parent)
     GLOBALVARS::updateTime = settings->value("updateTime", 1).toInt();
     GLOBALVARS::boundStiffnessFactor = settings->value("boundStiffness", 3000).toInt();
     GLOBALVARS::redrawTime = settings->value("redrawTime", 33).toInt();
+    GLOBALVARS::cellsPerThread = settings->value("cellsPerThread", 100).toInt();
 
     layout = new QGridLayout;
 
@@ -75,6 +76,12 @@ SettingsWidget::SettingsWidget(QWidget *parent) : QWidget(parent)
     redrawTime->setValue(GLOBALVARS::redrawTime);
     QWidget::connect(redrawTime, SIGNAL(valueChanged(int)), this, SLOT(redrawTimeSlot(int)));
 
+    cellsPerThread = new QSpinBox;
+    cellsPerThread->setMinimum(1);
+    cellsPerThread->setMaximum(999);
+    cellsPerThread->setValue(GLOBALVARS::cellsPerThread);
+    QWidget::connect(cellsPerThread, SIGNAL(valueChanged(int)), this, SLOT(cellsPerThreadSlot(int)));
+
     boundsLabel = new QLabel("Включить связи");
     gravityLabel = new QLabel("Включить поля");
     frictionLabel = new QLabel("Включить трение");
@@ -87,6 +94,7 @@ SettingsWidget::SettingsWidget(QWidget *parent) : QWidget(parent)
     redrawTimeLabel = new QLabel("Время обновления картинки, мс");
     settingsLabel = new QLabel("Настройки:");
     slowModeLabel = new QLabel("Медленный режим");
+    cellsPerThreadLabel = new QLabel("Частиц на один поток исполнения");
 
     layout->addWidget(boundsLabel, 1, 0, 1, 1, Qt::AlignLeft);
     layout->addWidget(gravityLabel, 2, 0, 1, 1, Qt::AlignLeft);
@@ -99,6 +107,7 @@ SettingsWidget::SettingsWidget(QWidget *parent) : QWidget(parent)
     layout->addWidget(boundStiffnessFactorLabel, 9, 0, 1, 1, Qt::AlignLeft);
     layout->addWidget(redrawTimeLabel, 10, 0, 1, 1, Qt::AlignLeft);
     layout->addWidget(slowModeLabel, 11, 0, 1, 1, Qt::AlignLeft);
+    layout->addWidget(cellsPerThreadLabel, 12, 0, 1, 1, Qt::AlignLeft);
     layout->addWidget(settingsLabel, 0, 0, 1, 1, Qt::AlignLeft);
 
     layout->addWidget(bounds, 1, 1, 1, 1, Qt::AlignRight);
@@ -112,6 +121,7 @@ SettingsWidget::SettingsWidget(QWidget *parent) : QWidget(parent)
     layout->addWidget(boundStiffnessFactor, 9, 1, 1, 1, Qt::AlignRight);
     layout->addWidget(redrawTime, 10, 1, 1, 1, Qt::AlignRight);
     layout->addWidget(slowMode, 11, 1, 1, 1, Qt::AlignRight);
+    layout->addWidget(cellsPerThread, 12, 1, 1, 1, Qt::AlignRight);
 
     setLayout(layout);
     settings->endGroup();
@@ -196,4 +206,12 @@ void SettingsWidget::slowModeSlot(int data)
         GLOBALVARS::simulationSpeed = GLOBALVARS::slowModeRait;
     }
     else GLOBALVARS::simulationSpeed = 10;
+}
+
+void SettingsWidget::cellsPerThreadSlot(int datax)
+{
+    settings->beginGroup("General");
+    settings->setValue("cellsPerThread", datax);
+    settings->endGroup();
+    GLOBALVARS::cellsPerThread = datax;
 }

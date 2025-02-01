@@ -119,9 +119,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     toggleRenderBut = new QPushButton("rend");
     toggleSimulationBut = new QPushButton("sim");
-    fillBut = new QPushButton("3");
+    loadBut = new QPushButton("3");
     clearBut = new QPushButton("clr");
-    redBut = new QPushButton("5");
+    saveBut = new QPushButton("5");
     dividingToolbar2But = new QPushButton("");
     dividingToolbar2But->setStyleSheet("QPushButton{background: transparent;}");
 
@@ -130,9 +130,10 @@ MainWindow::MainWindow(QWidget *parent) :
     toolbar2->addButton(toggleSimulationBut, 0);
     toolbar2->addButton(toggleRenderBut, 1);
     toolbar2->addButton(dividingToolbar2But);
-    toolbar2->addButton(fillBut, 2);
+    toolbar2->addButton(loadBut, 2);
     toolbar2->addButton(clearBut, 3);
-    toolbar2->addButton(redBut, 4);
+    toolbar2->addButton(saveBut, 4);
+    toolbar2->setExclusive(false);
 
     foreach(QAbstractButton* but, toolbar2->buttons())
     {
@@ -166,25 +167,28 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void  MainWindow::addCellButSlot()
 {
-    addMode = 1;
-    deleteMode = 0;
-    boundMode = 0;
-    unBoundMode = 0;
-    grabMode = 0;
-    stopMode = 0;
-    toggleMoveableMode = 0;
-    toggleCollisionsMode = 0;
-    removeAllBoundsMode  = 0;
+    if(isSimulationStopped)
+    {
+        addMode = 1;
+        deleteMode = 0;
+        boundMode = 0;
+        unBoundMode = 0;
+        grabMode = 0;
+        stopMode = 0;
+        toggleMoveableMode = 0;
+        toggleCollisionsMode = 0;
+        removeAllBoundsMode  = 0;
 
-    bufferHeight = height();
-    bufferWidth = width();
-    graphicsView->stopSimulation();
-    graphicsView->stopRendering();
-    takeCentralWidget();
-    setCentralWidget(new AddCellWidget);
-    connect(centralWidget(), SIGNAL(typeChosenSignal(int)), this, SLOT(cellChosenSlot(int)));
-    adjustSize();
-    setMaximumSize(width(), height());
+        bufferHeight = height();
+        bufferWidth = width();
+        graphicsView->stopSimulation();
+        graphicsView->stopRendering();
+        takeCentralWidget();
+        setCentralWidget(new AddCellWidget);
+        connect(centralWidget(), SIGNAL(typeChosenSignal(int)), this, SLOT(cellChosenSlot(int)));
+        adjustSize();
+        setMaximumSize(width(), height());
+    }
 }
 
 void  MainWindow::deleteCellButSlot()
@@ -437,7 +441,13 @@ void MainWindow::myToolbar2Clicked(QAbstractButton *button)
             {
                 deleteMode = 0;
             }
+            if(addMode)
+            {
+                addMode = 0;
+            }
             deleteCellBut->setEnabled(false);
+            addCellBut->setEnabled(false);
+            clearBut->setEnabled(false);
         }
         else
         {
@@ -445,6 +455,9 @@ void MainWindow::myToolbar2Clicked(QAbstractButton *button)
             isSimulationStopped = 1;
             deleteCellBut->setEnabled(true);
             deleteCellBut->setChecked(false);
+            addCellBut->setEnabled(true);
+            addCellBut->setChecked(false);
+            clearBut->setEnabled(true);
         }
     }
     else if(button == toggleRenderBut)
@@ -460,7 +473,7 @@ void MainWindow::myToolbar2Clicked(QAbstractButton *button)
             isRenderStopped = 1;
         }
     }
-    else if(button == fillBut)
+    else if(button == loadBut)
     {
         ;
     }
@@ -471,7 +484,7 @@ void MainWindow::myToolbar2Clicked(QAbstractButton *button)
             graphicsView->deleteCell(0);
         }
     }
-    else if(button == redBut)
+    else if(button == saveBut)
     {
         ;
     }

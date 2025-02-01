@@ -4,7 +4,7 @@
 Cells::Cells()
     :tickDone(true), threadsDoneWork(0)
 {
-    for(int i = 0; i < GLOBALVARS::numOfThreads; i++)
+    /*for(int i = 0; i < GLOBALVARS::numOfThreads; i++)
     {
         threadWorkers.append(new CellTickProcesser(&cells));
         threads.append(new QThread());
@@ -14,6 +14,31 @@ Cells::Cells()
         connect(this, SIGNAL(calculate(QThread*,quint16,quint16)), threadWorkers[i], SLOT(calculate(QThread*,quint16,quint16)));
         connect(this, SIGNAL(applyDeltas(QThread*,quint16,quint16)), threadWorkers[i], SLOT(applyDeltas(QThread*,quint16,quint16)));
         threads[i]->start(QThread::LowPriority);
+    }*/
+}
+
+void Cells::adjustThreads()
+{
+    GLOBALVARS::numOfThreads = (cells.size() + (GLOBALVARS::cellsPerThread+1)/2)/GLOBALVARS::cellsPerThread;
+    GLOBALVARS::numOfThreads = GLOBALVARS::numOfThreads == 0 ? 1 : GLOBALVARS::numOfThreads;
+    while(threads.size() < GLOBALVARS::numOfThreads)
+    {
+        threadWorkers.append(new CellTickProcesser(&cells));
+        threads.append(new QThread());
+        threadWorkers.last()->moveToThread(threads.last());
+        connect(threadWorkers.last(), SIGNAL(calculationReady(QThread*)), this, SLOT(calculationDoneSlot(QThread*)));
+        connect(threadWorkers.last(), SIGNAL(applyingDeltasReady(QThread*)), this, SLOT(applyDeltasDoneSlot(QThread*)));
+        connect(this, SIGNAL(calculate(QThread*,quint16,quint16)), threadWorkers.last(), SLOT(calculate(QThread*,quint16,quint16)));
+        connect(this, SIGNAL(applyDeltas(QThread*,quint16,quint16)), threadWorkers.last(), SLOT(applyDeltas(QThread*,quint16,quint16)));
+        threads.last()->start(QThread::LowPriority);
+    }
+    while(threads.size() > GLOBALVARS::numOfThreads)
+    {
+        threadWorkers.last()->deleteLater();
+        threads.last()->deleteLater();
+        threads.last()->quit();
+        threads.removeLast();
+        threadWorkers.removeLast();
     }
 }
 
