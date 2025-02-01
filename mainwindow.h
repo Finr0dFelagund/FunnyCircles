@@ -16,6 +16,8 @@
 #include "settingswidget.h"
 #include "typecreationwidget.h"
 #include "addcellwidget.h"
+#include <QFileDialog>
+#include <QTextStream>
 
 class MainWindow : public QMainWindow
 {
@@ -59,6 +61,9 @@ public:
     quint8 bufferTypeId;
     QGraphicsLineItem *speedLine;
 
+    QFileDialog *fileDialog;
+    bool saving, loading;
+
     QTimer* grabber, *selector, *speeder;
 
     void InitializeTypes();
@@ -85,6 +90,7 @@ public slots:
     void typeCreated();
     void cellChosenSlot(int id);
     void speedSettingSlot();
+    void fileSelectedSlot(QString file);
 };
 
 #endif // MAINWINDOW_H

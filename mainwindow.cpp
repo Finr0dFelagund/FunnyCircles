@@ -5,7 +5,7 @@ MainWindow* MainWindow::myWindow;
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent), standartButtonToolbarSize(40), standartButtonToolbar2Size(30),
     addMode(0), deleteMode(0), boundMode(0), unBoundMode(0), grabMode(0), stopMode(0), toggleMoveableMode(0), toggleCollisionsMode(0), removeAllBoundsMode(0),
-    selectionZone(0), isSettingsView(0), bufferCell(0), isSimulationStopped(1), isRenderStopped(0), speedLine(0)
+    selectionZone(0), isSettingsView(0), bufferCell(0), isSimulationStopped(1), isRenderStopped(0), speedLine(0), saving(0), loading(0)
 {
     grabber = new QTimer;
     connect(grabber, SIGNAL(timeout()), this, SLOT(slotGrabberAlarm()));
@@ -40,8 +40,6 @@ MainWindow::MainWindow(QWidget *parent) :
     speedSlider->setInvertedAppearance(1);
     speedSlider->setValue(50);
     speedSlider->setFixedSize(300, 30);
-
-
 
     toolbarLayout = new QGridLayout;
     toolbarLayout->setVerticalSpacing(0);
@@ -106,8 +104,6 @@ MainWindow::MainWindow(QWidget *parent) :
     toolbarLayout->addWidget(grabBut, 4, 0);
     toolbarLayout->addWidget(createTypeBut, 5, 0, 1, 2);
 
-
-
     toolbar2Layout = new QHBoxLayout;
     toolbar2Layout->setSpacing(0);
     toolbar2Layout->setContentsMargins(0, 0, 0, 0);
@@ -119,12 +115,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     toggleRenderBut = new QPushButton("rend");
     toggleSimulationBut = new QPushButton("sim");
-    loadBut = new QPushButton("3");
+    loadBut = new QPushButton("load");
     clearBut = new QPushButton("clr");
-    saveBut = new QPushButton("5");
+    saveBut = new QPushButton("save");
     dividingToolbar2But = new QPushButton("");
     dividingToolbar2But->setStyleSheet("QPushButton{background: transparent;}");
-
 
     toolbar2 = new QButtonGroup;
     toolbar2->addButton(toggleSimulationBut, 0);
@@ -143,14 +138,15 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(toolbar2, SIGNAL(buttonClicked(QAbstractButton*)), this, SLOT(myToolbar2Clicked(QAbstractButton*)));
 
-
-
     settingsBut = new QPushButton("set");
     settingsBut->setFixedSize(standartButtonToolbarSize, standartButtonToolbarSize);
     connect(settingsBut, SIGNAL(clicked(bool)), this, SLOT(settingsSlot()));
     settingsWidget = new SettingsWidget;
 
-
+    fileDialog = new QFileDialog();
+    fileDialog->setDefaultSuffix("csv");
+    fileDialog->setNameFilter("*.csv");
+    connect(fileDialog, SIGNAL(fileSelected(QString)), this, SLOT(fileSelectedSlot(QString)));
 
     resize(1200, 900);
     setCentralWidget(mainWidget);
@@ -448,6 +444,8 @@ void MainWindow::myToolbar2Clicked(QAbstractButton *button)
             deleteCellBut->setEnabled(false);
             addCellBut->setEnabled(false);
             clearBut->setEnabled(false);
+            saveBut->setEnabled(false);
+            loadBut->setEnabled(false);
         }
         else
         {
@@ -458,6 +456,8 @@ void MainWindow::myToolbar2Clicked(QAbstractButton *button)
             addCellBut->setEnabled(true);
             addCellBut->setChecked(false);
             clearBut->setEnabled(true);
+            saveBut->setEnabled(true);
+            loadBut->setEnabled(true);
         }
     }
     else if(button == toggleRenderBut)
@@ -475,7 +475,10 @@ void MainWindow::myToolbar2Clicked(QAbstractButton *button)
     }
     else if(button == loadBut)
     {
-        ;
+        fileDialog->setFileMode(QFileDialog::ExistingFile);
+        fileDialog->setAcceptMode(QFileDialog::AcceptOpen);
+        fileDialog->open();
+        loading = true;
     }
     else if(button == clearBut)
     {
@@ -486,7 +489,9 @@ void MainWindow::myToolbar2Clicked(QAbstractButton *button)
     }
     else if(button == saveBut)
     {
-        ;
+        fileDialog->setAcceptMode(QFileDialog::AcceptSave);
+        fileDialog->open();
+        saving = true;
     }
 }
 
@@ -497,6 +502,75 @@ void MainWindow::speedSliderSlot(int value)
     if(isSimulationStopped)
     {
         graphicsView->stopSimulation();
+    }
+}
+
+void MainWindow::fileSelectedSlot(QString file)
+{
+    QFile file_(file);
+    QTextStream stream(&file_);
+    if(saving)
+    {
+        saving = false;
+        file_.open(QIODeviceBase::WriteOnly);
+        stream << graphicsView->cells.cells.size() << '\n';
+        for(quint16 i = 0; i < graphicsView->cells.cells.size(); i++)
+        {
+            stream << graphicsView->cells.cells[i]->position.x() << ' ' << graphicsView->cells.cells[i]->position.y() << ' ' <<
+                graphicsView->cells.cells[i]->speed.x() << ' ' << graphicsView->cells.cells[i]->speed.y() << ' ' <<
+                graphicsView->cells.cells[i]->type->name << '\n';
+            /*stream << graphicsView->cells.cells[i]->connectionsInd.size() << ' ';
+            for(quint8 j = 0; j < graphicsView->cells.cells[i]->connectionsInd.size(); j++)
+            {
+                stream << graphicsView->cells.cells[i]->connectionsInd[i] << ' ';
+            }
+            stream << '\n' << graphicsView->cells.cells[i]->numberOfTypeConnections.size() << ' ';
+            for(quint8 j = 0; j < graphicsView->cells.cells[i]->numberOfTypeConnections.size(); j++)
+            {
+                stream << graphicsView->cells.cells[i]->numberOfTypeConnections[i] << ' ';
+            }
+            stream << '\n';*/
+            stream << graphicsView->cells.cells[i]->collisionAble << ' ' << graphicsView->cells.cells[i]->moveAble << '\n';
+        }
+        file_.close();
+    }
+    if(loading)
+    {
+        loading = false;
+        file_.open(QIODeviceBase::ReadOnly);
+        quint16 buff1, buff3;
+        qreal buff2;
+        QVector2D pos, spd;
+        QString nm;
+        CellType *cltp;
+        stream >> buff1;
+        for(int i = 0; i < buff1; i++)
+        {
+            stream >> buff2;
+            pos.setX(buff2);
+            stream >> buff2;
+            pos.setY(buff2);
+            stream >> buff2;
+            spd.setX(buff2);
+            stream >> buff2;
+            spd.setY(buff2);
+            stream >> nm;
+            for(int j = 0; j < CellType::types.size(); j++)
+            {
+                if(CellType::types[j]->name == nm)
+                {
+                    cltp = CellType::types[j];
+                    break;
+                }
+            }
+            graphicsView->addCell(cltp, pos, spd);
+            //and bounds
+            stream >> buff3;
+            graphicsView->cells.cells.last()->collisionAble = buff3;
+            stream >> buff3;
+            graphicsView->cells.cells.last()->moveAble = buff3;
+        }
+        file_.close();
     }
 }
 
