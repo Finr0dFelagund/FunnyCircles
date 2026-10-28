@@ -11,6 +11,7 @@
 #include <QHBoxLayout>
 #include <QMainWindow>
 #include <QPoint>
+#include <QPointF>
 #include <QPushButton>
 #include <QSlider>
 #include <QTextStream>
@@ -96,6 +97,11 @@ public slots:
     void cellChosenSlot(int id);
     void speedSettingSlot();
     void fileSelectedSlot(QString file);
+
+private:
+    QPointF scene_position_from_cursor() const;
+    QPointF scene_position_from_global(const QPoint& point) const;
+    void reset_modes();
 };
 
 #endif // MAINWINDOW_H

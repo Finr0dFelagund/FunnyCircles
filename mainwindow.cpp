@@ -167,15 +167,8 @@ void  MainWindow::addCellButSlot()
 {
     if(isSimulationStopped)
     {
+        reset_modes();
         addMode = 1;
-        deleteMode = 0;
-        boundMode = 0;
-        unBoundMode = 0;
-        grabMode = 0;
-        stopMode = 0;
-        toggleMoveableMode = 0;
-        toggleCollisionsMode = 0;
-        removeAllBoundsMode  = 0;
 
         bufferHeight = height();
         bufferWidth = width();
@@ -193,124 +186,60 @@ void  MainWindow::deleteCellButSlot()
 {
     if(isSimulationStopped)
     {
-        addMode = 0;
+        reset_modes();
         deleteMode = 1;
-        boundMode = 0;
-        unBoundMode = 0;
-        grabMode = 0;
-        stopMode = 0;
-        toggleMoveableMode = 0;
-        toggleCollisionsMode = 0;
-        removeAllBoundsMode = 0;
     }
 }
 
 void MainWindow::toggleMoveableButSlot()
 {
-    addMode = 0;
-    deleteMode = 0;
-    boundMode = 0;
-    unBoundMode = 0;
-    grabMode = 0;
-    stopMode = 0;
+    reset_modes();
     toggleMoveableMode = 1;
-    toggleCollisionsMode = 0;
-    removeAllBoundsMode = 0;
 }
 
 void MainWindow::toggleCollisionsButSlot()
 {
-    addMode = 0;
-    deleteMode = 0;
-    boundMode = 0;
-    unBoundMode = 0;
-    grabMode = 0;
-    stopMode = 0;
-    toggleMoveableMode = 0;
+    reset_modes();
     toggleCollisionsMode = 1;
-    removeAllBoundsMode  = 0;
 }
 
 void MainWindow::createConnectionButSlot()
 {
-    addMode = 0;
-    deleteMode = 0;
+    reset_modes();
     boundMode = 1;
-    unBoundMode = 0;
-    grabMode = 0;
-    stopMode = 0;
-    toggleMoveableMode = 0;
-    toggleCollisionsMode = 0;
-    removeAllBoundsMode = 0;
 
     bufferCell = 0;
 }
 
 void MainWindow::removeConnectionButSlot()
 {
-    addMode = 0;
-    deleteMode = 0;
-    boundMode = 0;
+    reset_modes();
     unBoundMode = 1;
-    grabMode = 0;
-    stopMode = 0;
-    toggleMoveableMode = 0;
-    toggleCollisionsMode = 0;
-    removeAllBoundsMode  = 0;
 
     bufferCell = 0;
 }
 
 void MainWindow::stopButSlot()
 {
-    addMode = 0;
-    deleteMode = 0;
-    boundMode = 0;
-    unBoundMode = 0;
-    grabMode = 0;
+    reset_modes();
     stopMode = 1;
-    toggleMoveableMode = 0;
-    toggleCollisionsMode = 0;
-    removeAllBoundsMode  = 0;
 }
 
 void MainWindow::removeAllConnectionsButSlot()
 {
-    addMode = 0;
-    deleteMode = 0;
-    boundMode = 0;
-    unBoundMode = 0;
-    grabMode = 0;
-    stopMode = 0;
-    toggleMoveableMode = 0;
-    toggleCollisionsMode = 0;
-    removeAllBoundsMode  = 1;
+    reset_modes();
+    removeAllBoundsMode = 1;
 }
 
 void MainWindow::grabButSlot()
 {
-    addMode = 0;
-    deleteMode = 0;
-    boundMode = 0;
-    unBoundMode = 0;
+    reset_modes();
     grabMode = 1;
-    stopMode = 0;
-    toggleMoveableMode = 0;
-    toggleCollisionsMode = 0;
-    removeAllBoundsMode  = 0;
 }
 
 void MainWindow::createTypeButSlot()
 {
-    addMode = 0;
-    deleteMode = 0;
-    boundMode = 0;
-    unBoundMode = 0;
-    grabMode = 0;
-    stopMode = 0;
-    toggleMoveableMode = 0;
-    toggleCollisionsMode = 0;
-    removeAllBoundsMode  = 0;
+    reset_modes();
 
     bufferHeight = height();
     bufferWidth = width();
@@ -584,7 +513,8 @@ void MainWindow::sceneInteracted(quint8 button, quint8 event)
         {
             if(!addMode)
             {
-                selectionZone = new QGraphicsRectItem(QRectF(graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(QCursor::pos()).y()), graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x() + 1, graphicsView->mapFromGlobal(QCursor::pos()).y() + 1)));
+                const QPointF zone_origin = scene_position_from_cursor();
+                selectionZone = new QGraphicsRectItem(QRectF(zone_origin, zone_origin + QPointF(1, 1)));
                 selectionZone->setBrush(Qt::Dense7Pattern);
                 graphicsView->scene.addItem(selectionZone);
                 bufferPosition = QCursor::pos();
@@ -592,8 +522,9 @@ void MainWindow::sceneInteracted(quint8 button, quint8 event)
             }
             else
             {
-                bufferPosition.setX(graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(QCursor::pos()).y()).x());
-                bufferPosition.setY(graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(QCursor::pos()).y()).y());
+                const QPointF scene_pointer = scene_position_from_cursor();
+                bufferPosition.setX(scene_pointer.x());
+                bufferPosition.setY(scene_pointer.y());
                 graphicsView->addCell(CellType::types[bufferTypeId], QVector2D(bufferPosition.x(), bufferPosition.y()), QVector2D(0, 0));
                 graphicsView->cells.cells.last()->moveAble = false;
                 graphicsView->cells.cells.last()->collisionAble = false;
@@ -658,7 +589,8 @@ void MainWindow::sceneInteracted(quint8 button, quint8 event)
                 speedLine = 0;
                 graphicsView->cells.cells.last()->moveAble = true;
                 graphicsView->cells.cells.last()->collisionAble = true;
-                graphicsView->cells.cells.last()->speed = QVector2D(graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(QCursor::pos()).y()).x() - bufferPosition.x(), graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(QCursor::pos()).y()).y() - bufferPosition.y());
+                const QPointF scene_pointer = scene_position_from_cursor();
+                graphicsView->cells.cells.last()->speed = QVector2D(scene_pointer.x() - bufferPosition.x(), scene_pointer.y() - bufferPosition.y());
                 bufferCell = 0;
             }
         }
@@ -671,21 +603,23 @@ void MainWindow::sceneInteracted(quint8 button, quint8 event)
 
 void MainWindow::slotSelectorAlarm()
 {
+    const QPointF cursor_position = scene_position_from_cursor();
+    const QPointF anchor_position = scene_position_from_global(bufferPosition);
     if(QCursor::pos().x() >= bufferPosition.x() && QCursor::pos().y() >= bufferPosition.y())
     {
-        selectionZone->setRect(QRectF(graphicsView->mapToScene(graphicsView->mapFromGlobal(bufferPosition).x(), graphicsView->mapFromGlobal(bufferPosition).y()), graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(QCursor::pos()).y())));
+        selectionZone->setRect(QRectF(anchor_position, cursor_position));
     }
     else if(QCursor::pos().x() >= bufferPosition.x() && QCursor::pos().y() < bufferPosition.y())
     {
-        selectionZone->setRect(QRectF(graphicsView->mapToScene(graphicsView->mapFromGlobal(bufferPosition).x(), graphicsView->mapFromGlobal(QCursor::pos()).y()), graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(bufferPosition).y())));
+        selectionZone->setRect(QRectF(QPointF(anchor_position.x(), cursor_position.y()), QPointF(cursor_position.x(), anchor_position.y())));
     }
     else if(QCursor::pos().x() < bufferPosition.x() && QCursor::pos().y() >= bufferPosition.y())
     {
-        selectionZone->setRect(QRectF(graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(bufferPosition).y()), graphicsView->mapToScene(graphicsView->mapFromGlobal(bufferPosition).x(), graphicsView->mapFromGlobal(QCursor::pos()).y())));
+        selectionZone->setRect(QRectF(QPointF(cursor_position.x(), anchor_position.y()), QPointF(anchor_position.x(), cursor_position.y())));
     }
     else if(QCursor::pos().x() < bufferPosition.x() && QCursor::pos().y() < bufferPosition.y())
     {
-        selectionZone->setRect(QRectF(graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(QCursor::pos()).y()), graphicsView->mapToScene(graphicsView->mapFromGlobal(bufferPosition).x(), graphicsView->mapFromGlobal(bufferPosition).y())));
+        selectionZone->setRect(QRectF(cursor_position, anchor_position));
     }
 }
 
@@ -812,7 +746,34 @@ void MainWindow::cellChosenSlot(int id)
 
 void MainWindow::speedSettingSlot()
 {
-    speedLine->setLine(bufferPosition.x(), bufferPosition.y(), graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(QCursor::pos()).y()).x(), graphicsView->mapToScene(graphicsView->mapFromGlobal(QCursor::pos()).x(), graphicsView->mapFromGlobal(QCursor::pos()).y()).y());
+    const QPointF pointer_position = scene_position_from_cursor();
+    speedLine->setLine(bufferPosition.x(), bufferPosition.y(), pointer_position.x(), pointer_position.y());
+}
+
+// Перевод позиции курсора в координаты сцены.
+QPointF MainWindow::scene_position_from_cursor() const
+{
+    return scene_position_from_global(QCursor::pos());
+}
+
+// Перевод точки в глобальных экранных координатах в координаты сцены.
+QPointF MainWindow::scene_position_from_global(const QPoint& point) const
+{
+    return graphicsView->mapToScene(graphicsView->mapFromGlobal(point));
+}
+
+// Сброс всех переключателей режимов взаимодействия.
+void MainWindow::reset_modes()
+{
+    addMode = 0;
+    deleteMode = 0;
+    boundMode = 0;
+    unBoundMode = 0;
+    grabMode = 0;
+    stopMode = 0;
+    toggleMoveableMode = 0;
+    toggleCollisionsMode = 0;
+    removeAllBoundsMode = 0;
 }
 
 MainWindow::~MainWindow()
