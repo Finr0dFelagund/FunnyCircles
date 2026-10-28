@@ -1,8 +1,12 @@
 #include "cells.h"
+
+#include <QCoreApplication>
+#include <QEventLoop>
+
 #include "globalvars.h"
 
 Cells::Cells()
-    :tickDone(true), threadsDoneWork(0)
+    :tickDone(true), stopRequested(false), threadsDoneWork(0), pendingWork(0), tickRunning(false)
 {
     /*for(int i = 0; i < GLOBALVARS::numOfThreads; i++)
     {
@@ -15,6 +19,44 @@ Cells::Cells()
         connect(this, SIGNAL(applyDeltas(QThread*,quint16,quint16)), threadWorkers[i], SLOT(applyDeltas(QThread*,quint16,quint16)));
         threads[i]->start(QThread::LowPriority);
     }*/
+}
+
+Cells::~Cells()
+{
+    shutdown_threads();
+}
+
+void Cells::shutdown_threads()
+{
+    while(!threads.isEmpty())
+    {
+        QThread* thread = threads.takeLast();
+        CellTickProcesser* worker = threadWorkers.takeLast();
+        thread->quit();
+        thread->wait();
+        delete worker;
+        delete thread;
+    }
+}
+
+bool Cells::is_busy() const
+{
+    return !tickDone;
+}
+
+void Cells::stop()
+{
+    stopRequested = true;
+    // Ожидание завершения текущего такта: сигналы потоков доставляются в очередь
+    // событий главного потока, поэтому она обрабатывается до закрытия такта.
+    while(tickRunning.load())
+    {
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
+    }
+    tickDone = true;
+    threadsDoneWork = 0;
+    pendingWork = 0;
+    stopRequested = false;
 }
 
 void Cells::adjustThreads()
@@ -34,11 +76,15 @@ void Cells::adjustThreads()
     }
     while(threads.size() > GLOBALVARS::numOfThreads)
     {
-        threadWorkers.last()->deleteLater();
-        threads.last()->deleteLater();
-        threads.last()->quit();
-        threads.removeLast();
-        threadWorkers.removeLast();
+        // Поток завершается до уничтожения обработчика, иначе объект уничтожается
+        // во время выполнения слота в чужом потоке.
+        QThread* thread = threads.takeLast();
+        CellTickProcesser* worker = threadWorkers.takeLast();
+        disconnect(this, nullptr, worker, nullptr);
+        thread->quit();
+        thread->wait();
+        delete worker;
+        delete thread;
     }
 }
 
@@ -115,9 +161,9 @@ bool Cells::tryToConnect(quint16 a, quint16 b)
     qreal boundEnergy = GLOBALVARS::boundStiffnessFactor * ((distance > 0) ? distance : 0) / sqrt(sqrt(consumer->type->mass + dealer->type->mass));
     if(consumer != dealer && boundEnergy < GLOBALVARS::maxBoundEnergy)
     {
-        for(quint16 k = 0; k < consumer->connectionsInd.size(); k++)
+        for(quint16 k = 0; k < cells[b]->connectionsInd.size(); k++)
         {
-            if(consumer->connectionsInd[k] == b)
+            if(cells[b]->connectionsInd[k] == a)
             {
                 result = false;
                 break;
@@ -127,14 +173,14 @@ bool Cells::tryToConnect(quint16 a, quint16 b)
         {
             return result;
         }
-        else
+        cells[a <= b ? a : b]->mutex.lock();
+        cells[a <= b ? b : a]->mutex.lock();
         {
-            cells[a <= b ? a : b]->mutex.lock();
-            cells[a <= b ? b : a]->mutex.lock();
-            if((consumer->numberOfTypeConnections[dealer->type->number] < consumer->type->maxConnectionsNumber[dealer->type->number] || consumer->type->maxConnectionsNumber[dealer->type->number] < 0) &&
+            const bool created = (consumer->numberOfTypeConnections[dealer->type->number] < consumer->type->maxConnectionsNumber[dealer->type->number] || consumer->type->maxConnectionsNumber[dealer->type->number] < 0) &&
                 (dealer->numberOfTypeConnections[consumer->type->number] < dealer->type->maxConnectionsNumber[consumer->type->number] || dealer->type->maxConnectionsNumber[consumer->type->number] < 0) &&
                 (consumer->numberOfTypeConnections.last() < consumer->type->maxConnectionsNumber.last() || consumer->type->maxConnectionsNumber.last() < 0) &&
-                (dealer->numberOfTypeConnections.last() < dealer->type->maxConnectionsNumber.last() || dealer->type->maxConnectionsNumber.last() < 0))
+                (dealer->numberOfTypeConnections.last() < dealer->type->maxConnectionsNumber.last() || dealer->type->maxConnectionsNumber.last() < 0);
+            if(created)
             {
                 consumer->connectionsInd.append(b);
                 consumer->numberOfTypeConnections[dealer->type->number]++;
@@ -143,44 +189,69 @@ bool Cells::tryToConnect(quint16 a, quint16 b)
                 dealer->numberOfTypeConnections[consumer->type->number]++;
                 dealer->numberOfTypeConnections.last()++;
             }
-            cells[a <= b ? b : a]->mutex.unlock();
-            cells[a <= b ? a : b]->mutex.unlock();
+            result = created;
         }
+        cells[a <= b ? b : a]->mutex.unlock();
+        cells[a <= b ? a : b]->mutex.unlock();
+    }
+    else
+    {
+        result = false;
     }
     return result;
 }
 
 void Cells::applyDeltasDoneSlot(QThread* thr)
 {
+    Q_UNUSED(thr);
+    // threadsDoneWork считает отчитавшиеся потоки текущей фазы, pendingWork — сколько
+    // их ожидается. Счётчик обнуляется при переходе к следующей фазе такта.
     threadsDoneWork++;
-    if(threadsDoneWork < GLOBALVARS::numOfThreads)
+    if(threadsDoneWork < pendingWork)
     {
         return;
     }
     threadsDoneWork = 0;
+    pendingWork = 0;
+    tickRunning.store(false);
     tickDone = true;
 }
 
 void Cells::calculationDoneSlot(QThread* thr)
 {
+    Q_UNUSED(thr);
     threadsDoneWork++;
-    if(threadsDoneWork < GLOBALVARS::numOfThreads)
+    if(threadsDoneWork < pendingWork)
     {
         return;
     }
-    for(int i = 0; i < threads.size() - 1; i++)
-    {
-        emit applyDeltas(threads[i], i*(cells.size()/GLOBALVARS::numOfThreads), (i+1)*(cells.size()/GLOBALVARS::numOfThreads));
-    }
-    emit applyDeltas(threads.last(), (threads.size() - 1)*(cells.size()/GLOBALVARS::numOfThreads), cells.size());
     threadsDoneWork = 0;
+    if(stopRequested || threads.isEmpty())
+    {
+        // Прерванный такт не применяет дельты: данные остаются в состоянии
+        // последнего завершённого такта.
+        pendingWork = 0;
+        tickRunning.store(false);
+        tickDone = true;
+        return;
+    }
+    const int applied_threads = static_cast<int>(threads.size());
+    pendingWork = static_cast<quint8>(applied_threads);
+    for(int i = 0; i < applied_threads - 1; i++)
+    {
+        emit applyDeltas(threads[i], i*(cells.size()/applied_threads), (i+1)*(cells.size()/applied_threads));
+    }
+    emit applyDeltas(threads[applied_threads - 1], (applied_threads - 1)*(cells.size()/applied_threads), cells.size());
 }
 
 void Cells::tick()
 {
-    if(tickDone)
+    if(tickDone && !stopRequested && !threads.isEmpty())
     {
         tickDone = false;
+        tickRunning.store(true);
+        threadsDoneWork = 0;
+        pendingWork = static_cast<quint8>(threads.size());
         for(int i = 0; i < threads.size() - 1; i++)
         {
             emit calculate(threads[i], i*(cells.size()/GLOBALVARS::numOfThreads), (i+1)*(cells.size()/GLOBALVARS::numOfThreads));

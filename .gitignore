@@ -72,3 +72,11 @@ CMakeLists.txt.user*
 *.dll
 *.exe
 
+# Build directory
+build/
+
+# Local application settings
+settings.ini
+
+# IDE configuration
+.vscode/

@@ -1,23 +1,28 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
-#include <QGraphicsScene>
-#include "myqgraphicsview.h"
-#include <QGridLayout>
-#include <QButtonGroup>
-#include <QPushButton>
-#include "cells.h"
-#include "QTimer"
-#include <QHBoxLayout>
-#include <QSlider>
 #include <QApplication>
+#include <QButtonGroup>
+#include <QFileDialog>
+#include <QGraphicsLineItem>
+#include <QGraphicsRectItem>
+#include <QGraphicsScene>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QMainWindow>
+#include <QPoint>
+#include <QPushButton>
+#include <QSlider>
+#include <QTextStream>
+#include <QTimer>
+#include <QWidget>
 #include <QtMath>
+
+#include "addcellwidget.h"
+#include "cells.h"
+#include "myqgraphicsview.h"
 #include "settingswidget.h"
 #include "typecreationwidget.h"
-#include "addcellwidget.h"
-#include <QFileDialog>
-#include <QTextStream>
 
 class MainWindow : public QMainWindow
 {

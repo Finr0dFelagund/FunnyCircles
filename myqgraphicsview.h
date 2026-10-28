@@ -1,12 +1,17 @@
 #ifndef MYQGRAPHICSVIEW_H
 #define MYQGRAPHICSVIEW_H
 
-#include <QGraphicsView>
-#include "cells.h"
-#include "celltype.h"
-#include <QMouseEvent>
-#include <QGraphicsEllipseItem>
 #include <QApplication>
+#include <QGraphicsEllipseItem>
+#include <QGraphicsLineItem>
+#include <QGraphicsScene>
+#include <QGraphicsView>
+#include <QMouseEvent>
+#include <QTimer>
+#include <QVector>
+
+#include "celltype.h"
+#include "cells.h"
 
 class Cell;
 

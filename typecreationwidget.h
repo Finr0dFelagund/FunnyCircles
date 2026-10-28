@@ -1,17 +1,21 @@
 #ifndef TYPECREATIONWIDGET_H
 #define TYPECREATIONWIDGET_H
 
-#include <QWidget>
-#include <QSettings>
-#include <QGridLayout>
-#include <QSpinBox>
-#include <QPushButton>
+#include <QButtonGroup>
+#include <QColor>
 #include <QColorDialog>
+#include <QGridLayout>
+#include <QLabel>
 #include <QLineEdit>
+#include <QPalette>
+#include <QPushButton>
+#include <QSettings>
+#include <QSpinBox>
+#include <QVector>
+#include <QWidget>
+
 #include "celltype.h"
 #include "globalvars.h"
-#include <QLabel>
-#include <QButtonGroup>
 
 class TypeCreationWidget : public QWidget
 {

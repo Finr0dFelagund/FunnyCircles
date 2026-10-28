@@ -3,22 +3,10 @@
 
 #include <QObject>
 #include <QThread>
-#include <QVector2D>
-#include "celltype.h"
+#include <QVector>
 
-struct Cell
-{
-    QVector2D acceleration;
-    QVector2D speed;
-    QVector2D position;
-    QVector2D sumForce;
-    CellType* type;
-    QVector<quint8> numberOfTypeConnections;//last is the whole connections
-    bool moveAble;
-    bool collisionAble;
-    QVector<quint16> connectionsInd;
-    QMutex mutex;
-};
+#include "core/cell.h"
+#include "celltype.h"
 
 class CellTickProcesser : public QObject
 {

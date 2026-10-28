@@ -1,10 +1,12 @@
 #ifndef ADDCELLWIDGET_H
 #define ADDCELLWIDGET_H
 
-#include <QWidget>
 #include <QBoxLayout>
-#include <QPushButton>
 #include <QButtonGroup>
+#include <QPushButton>
+#include <QVector>
+#include <QWidget>
+
 #include "celltype.h"
 
 class AddCellWidget : public QWidget

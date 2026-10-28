@@ -1,7 +1,10 @@
 #include "mainwindow.h"
+
 #include "celltype.h"
-#include <QVector2D>
+
 #include <QApplication>
+#include <QRandomGenerator>
+#include <QVector2D>
 #include <QtMath>
 
 int main(int argc, char *argv[])

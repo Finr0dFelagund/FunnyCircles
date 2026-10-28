@@ -1,4 +1,5 @@
 #include "celltickprocesser.h"
+
 #include "globalvars.h"
 
 CellTickProcesser::CellTickProcesser(QVector<Cell*> *cellArray_)

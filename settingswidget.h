@@ -1,12 +1,13 @@
 #ifndef SETTINGSWIDGET_H
 #define SETTINGSWIDGET_H
 
-#include <QWidget>
-#include <QGridLayout>
 #include <QCheckBox>
-#include <QSpinBox>
+#include <QGridLayout>
 #include <QLabel>
 #include <QSettings>
+#include <QSpinBox>
+#include <QWidget>
+
 #include "globalvars.h"
 
 class SettingsWidget : public QWidget

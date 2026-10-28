@@ -2,7 +2,8 @@
 #define CELLTYPE_H
 
 #include <QBrush>
-#include <QtCore>
+#include <QString>
+#include <QVector>
 
 class CellType
 {

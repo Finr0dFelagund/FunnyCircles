@@ -1,8 +1,7 @@
 #ifndef GLOBALVARS_H
 #define GLOBALVARS_H
 
-#include <QtCore>
-#include <QMutex>
+#include <QtGlobal>
 
 namespace GLOBALVARS
 {

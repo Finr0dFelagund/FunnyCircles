@@ -1,5 +1,5 @@
 #include "myqgraphicsview.h"
-#include <QTimer>
+
 #include "globalvars.h"
 
 MyQGraphicsView::MyQGraphicsView(QWidget *parent)
@@ -70,6 +70,7 @@ void MyQGraphicsView::startSimulation(quint16 period)
 void MyQGraphicsView::stopSimulation()
 {
     ticker->stop();
+    cells.stop();
 }
 
 void MyQGraphicsView::startRendering(quint8 period)
