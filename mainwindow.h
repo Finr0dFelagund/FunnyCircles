@@ -102,6 +102,13 @@ private:
     QPointF scene_position_from_cursor() const;
     QPointF scene_position_from_global(const QPoint& point) const;
     void reset_modes();
+    void apply_common_cell_action(quint16 cell_index);
+    void save_view_geometry();
+    void suspend_view();
+    void resume_view();
+    void show_page(QWidget* page);
+    void fit_window_to_page();
+    void restore_main_page();
 };
 
 #endif // MAINWINDOW_H

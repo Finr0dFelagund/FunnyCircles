@@ -170,15 +170,10 @@ void  MainWindow::addCellButSlot()
         reset_modes();
         addMode = 1;
 
-        bufferHeight = height();
-        bufferWidth = width();
-        graphicsView->stopSimulation();
-        graphicsView->stopRendering();
-        takeCentralWidget();
-        setCentralWidget(new AddCellWidget);
+        save_view_geometry();
+        show_page(new AddCellWidget);
         connect(centralWidget(), SIGNAL(typeChosenSignal(int)), this, SLOT(cellChosenSlot(int)));
-        adjustSize();
-        setMaximumSize(width(), height());
+        fit_window_to_page();
     }
 }
 
@@ -241,15 +236,10 @@ void MainWindow::createTypeButSlot()
 {
     reset_modes();
 
-    bufferHeight = height();
-    bufferWidth = width();
-    graphicsView->stopSimulation();
-    graphicsView->stopRendering();
-    takeCentralWidget();
-    setCentralWidget(new TypeCreationWidget);
+    save_view_geometry();
+    show_page(new TypeCreationWidget);
     QObject::connect(centralWidget(), SIGNAL(destroyed(QObject*)), this, SLOT(typeCreated()));
-    adjustSize();
-    setMaximumSize(width(), height());
+    fit_window_to_page();
 }
 
 void MainWindow::cellInteracted(quint16 cell, quint8 mouseButton, quint8 event)
@@ -262,35 +252,9 @@ void MainWindow::cellInteracted(quint16 cell, quint8 mouseButton, quint8 event)
             {
                 graphicsView->deleteCell(cell);
             }
-            else if(stopMode)
+            else if(stopMode || toggleMoveableMode || toggleCollisionsMode || removeAllBoundsMode)
             {
-                graphicsView->cells.cells[cell]->speed = QVector2D(0, 0);
-            }
-            else if(toggleMoveableMode)
-            {
-                if(graphicsView->cells.cells[cell]->moveAble)
-                {
-                    graphicsView->cells.cells[cell]->moveAble = 0;
-                }
-                else
-                {
-                    graphicsView->cells.cells[cell]->moveAble = 1;
-                }
-            }
-            else if(toggleCollisionsMode)
-            {
-                if(graphicsView->cells.cells[cell]->collisionAble)
-                {
-                    graphicsView->cells.cells[cell]->collisionAble = 0;
-                }
-                else
-                {
-                    graphicsView->cells.cells[cell]->collisionAble = 1;
-                }
-            }
-            else if(removeAllBoundsMode)
-            {
-                graphicsView->cells.removeAllConnections(cell);
+                apply_common_cell_action(cell);
             }
             else if(boundMode)
             {
@@ -545,35 +509,9 @@ void MainWindow::sceneInteracted(quint8 button, quint8 event)
                         {
                             graphicsView->deleteCell(graphicsView->circles.indexOf(item));
                         }
-                        else if(stopMode)
+                        else if(stopMode || toggleMoveableMode || toggleCollisionsMode || removeAllBoundsMode)
                         {
-                            graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->speed = QVector2D(0, 0);
-                        }
-                        else if(toggleMoveableMode)
-                        {
-                            if(graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->moveAble)
-                            {
-                                graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->moveAble = 0;
-                            }
-                            else
-                            {
-                                graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->moveAble = 1;
-                            }
-                        }
-                        else if(toggleCollisionsMode)
-                        {
-                            if(graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->collisionAble)
-                            {
-                                graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->collisionAble = 0;
-                            }
-                            else
-                            {
-                                graphicsView->cells.cells[graphicsView->circles.indexOf(item)]->collisionAble = 1;
-                            }
-                        }
-                        else if(removeAllBoundsMode)
-                        {
-                            graphicsView->cells.removeAllConnections(graphicsView->circles.indexOf(item));
+                            apply_common_cell_action(graphicsView->circles.indexOf(item));
                         }
                     }
                 }
@@ -628,12 +566,8 @@ void MainWindow::settingsSlot()
     if(isSettingsView)
     {
         isSettingsView = 0;
-        setMaximumSize(2048, 2048);
         takeCentralWidget();
-        setCentralWidget(mainWidget);
-        mainLayout->addWidget(settingsBut, 0, 2, 1, 1, Qt::AlignTop | Qt::AlignRight);
-        resize(bufferWidth, bufferHeight);
-        setMinimumWidth(standartButtonToolbar2Size * 3 * 6 + 300 + 60);
+        restore_main_page();
         if(GLOBALVARS::simulationSpeed == GLOBALVARS::slowModeRait)
         {
             speedSlider->hide();
@@ -643,45 +577,22 @@ void MainWindow::settingsSlot()
             speedSlider->show();
             GLOBALVARS::simulationSpeed = speedSlider->value();
         }
-        if(isSimulationStopped == 0)
-        {
-            graphicsView->startSimulation();
-        }
-        if(isRenderStopped == 0)
-        {
-            graphicsView->startRendering();
-        }
+        resume_view();
     }
     else
     {
         isSettingsView = 1;
-        bufferHeight = height();
-        bufferWidth = width();
-        takeCentralWidget();
-        graphicsView->stopSimulation();
-        graphicsView->stopRendering();
-        setCentralWidget(settingsWidget);
+        save_view_geometry();
+        show_page(settingsWidget);
         settingsWidget->layout->addWidget(settingsBut, 0, 1, 1, 1, Qt::AlignTop | Qt::AlignRight);
-        adjustSize();
-        setMaximumSize(width(), height());
+        fit_window_to_page();
     }
 }
 
 void MainWindow::typeCreated()
 {
-    setMaximumSize(2048, 2048);
-    setCentralWidget(mainWidget);
-    mainLayout->addWidget(settingsBut, 0, 2, 1, 1, Qt::AlignTop | Qt::AlignRight);
-    resize(bufferWidth, bufferHeight);
-    setMinimumWidth(standartButtonToolbar2Size * 3 * 6 + 300 + 60);
-    if(isSimulationStopped == 0)
-    {
-        graphicsView->startSimulation();
-    }
-    if(isRenderStopped == 0)
-    {
-        graphicsView->startRendering();
-    }
+    restore_main_page();
+    resume_view();
     myToolbar2Clicked(clearBut);
 }
 
@@ -729,19 +640,8 @@ void MainWindow::InitializeTypes()
 void MainWindow::cellChosenSlot(int id)
 {
     bufferTypeId = (id == -1) ? bufferTypeId : id;
-    setMaximumSize(2048, 2048);
-    setCentralWidget(mainWidget);
-    mainLayout->addWidget(settingsBut, 0, 2, 1, 1, Qt::AlignTop | Qt::AlignRight);
-    resize(bufferWidth, bufferHeight);
-    setMinimumWidth(standartButtonToolbar2Size * 3 * 6 + 300 + 60);
-    if(isSimulationStopped == 0)
-    {
-        graphicsView->startSimulation();
-    }
-    if(isRenderStopped == 0)
-    {
-        graphicsView->startRendering();
-    }
+    restore_main_page();
+    resume_view();
 }
 
 void MainWindow::speedSettingSlot()
@@ -774,6 +674,79 @@ void MainWindow::reset_modes()
     toggleMoveableMode = 0;
     toggleCollisionsMode = 0;
     removeAllBoundsMode = 0;
+}
+
+// Применение общих действий режимов к одной клетке.
+void MainWindow::apply_common_cell_action(quint16 cell_index)
+{
+    if(stopMode)
+    {
+        graphicsView->cells.cells[cell_index]->speed = QVector2D(0, 0);
+    }
+    else if(toggleMoveableMode)
+    {
+        graphicsView->cells.cells[cell_index]->moveAble = !graphicsView->cells.cells[cell_index]->moveAble;
+    }
+    else if(toggleCollisionsMode)
+    {
+        graphicsView->cells.cells[cell_index]->collisionAble = !graphicsView->cells.cells[cell_index]->collisionAble;
+    }
+    else if(removeAllBoundsMode)
+    {
+        graphicsView->cells.removeAllConnections(cell_index);
+    }
+}
+
+// Сохранение текущих размеров главного окна.
+void MainWindow::save_view_geometry()
+{
+    bufferHeight = height();
+    bufferWidth = width();
+}
+
+// Приостановка расчёта и отрисовки сцены.
+void MainWindow::suspend_view()
+{
+    graphicsView->stopSimulation();
+    graphicsView->stopRendering();
+}
+
+// Возобновление расчёта и отрисовки сцены, если они не остановлены пользователем.
+void MainWindow::resume_view()
+{
+    if(isSimulationStopped == 0)
+    {
+        graphicsView->startSimulation();
+    }
+    if(isRenderStopped == 0)
+    {
+        graphicsView->startRendering();
+    }
+}
+
+// Замена центральной страницы на служебную.
+void MainWindow::show_page(QWidget* page)
+{
+    suspend_view();
+    takeCentralWidget();
+    setCentralWidget(page);
+}
+
+// Подгонка размеров окна под служебную страницу.
+void MainWindow::fit_window_to_page()
+{
+    adjustSize();
+    setMaximumSize(width(), height());
+}
+
+// Возврат к странице со сценой.
+void MainWindow::restore_main_page()
+{
+    setMaximumSize(2048, 2048);
+    setCentralWidget(mainWidget);
+    mainLayout->addWidget(settingsBut, 0, 2, 1, 1, Qt::AlignTop | Qt::AlignRight);
+    resize(bufferWidth, bufferHeight);
+    setMinimumWidth(standartButtonToolbar2Size * 3 * 6 + 300 + 60);
 }
 
 MainWindow::~MainWindow()
