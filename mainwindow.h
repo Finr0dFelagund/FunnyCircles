@@ -1,29 +1,27 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QApplication>
-#include <QButtonGroup>
-#include <QFileDialog>
-#include <QGraphicsLineItem>
-#include <QGraphicsRectItem>
-#include <QGraphicsScene>
-#include <QGridLayout>
-#include <QHBoxLayout>
 #include <QMainWindow>
 #include <QPoint>
 #include <QPointF>
-#include <QPushButton>
-#include <QSlider>
-#include <QTextStream>
-#include <QTimer>
-#include <QWidget>
-#include <QtMath>
+#include <QString>
+#include <QVector2D>
+#include <QtGlobal>
 
-#include "addcellwidget.h"
-#include "cells.h"
-#include "myqgraphicsview.h"
-#include "settingswidget.h"
-#include "typecreationwidget.h"
+class QAbstractButton;
+class QButtonGroup;
+class QFileDialog;
+class QGraphicsLineItem;
+class QGraphicsRectItem;
+class QGridLayout;
+class QHBoxLayout;
+class QPushButton;
+class QSlider;
+class QTimer;
+class QWidget;
+
+class MyQGraphicsView;
+class SettingsWidget;
 
 class MainWindow : public QMainWindow
 {
@@ -99,6 +97,14 @@ public slots:
     void fileSelectedSlot(QString file);
 
 private:
+    void create_timers();
+    void create_view();
+    void create_layout();
+    void create_speed_slider();
+    void create_toolbar();
+    void create_toolbar2();
+    void create_settings_widget();
+    void create_file_dialog();
     QPointF scene_position_from_cursor() const;
     QPointF scene_position_from_global(const QPoint& point) const;
     void reset_modes();

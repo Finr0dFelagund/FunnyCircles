@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 
 #include "celltype.h"
+#include "myqgraphicsview.h"
 
 #include <QApplication>
 #include <QRandomGenerator>

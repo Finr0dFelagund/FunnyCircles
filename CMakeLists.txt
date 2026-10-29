@@ -20,6 +20,11 @@ set(PROJECT_SOURCES
 
 qt_add_executable(CellAutomatV2
     ${PROJECT_SOURCES}
+    mainwindow_modes.cpp
+    mainwindow_pages.cpp
+    mainwindow_interaction.cpp
+    mainwindow_file.cpp
+    mainwindow_types.cpp
     cells.h cells.cpp
     celltype.h celltype.cpp
 
